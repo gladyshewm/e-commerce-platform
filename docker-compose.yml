@@ -1,0 +1,30 @@
+services:
+  api-gateway:
+    build: 
+      context: ./server
+      dockerfile: apps/api-gateway/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./server/apps/api-gateway/.env
+    depends_on:
+      - user-service
+    develop:
+      watch:
+        - path: ./server/apps/api-gateway
+          target: /usr/src/app/apps/api-gateway
+          action: sync
+
+  user-service:
+    build:
+      context: ./server
+      dockerfile: apps/user/Dockerfile
+    ports:
+      - "3001:3000"
+    env_file:
+      - ./server/apps/user/.env
+    develop:
+      watch:
+        - path: ./server/apps/user
+          target: /usr/src/app/apps/user
+          action: sync
