@@ -1,12 +1,24 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { UserService } from './user.service';
+import {
+  Ctx,
+  MessagePattern,
+  Payload,
+  RmqContext,
+} from '@nestjs/microservices';
+import { BaseRpcController, RmqService } from '@app/rmq';
 
 @Controller()
-export class UserController {
-  constructor(private readonly userService: UserService) {}
+export class UserController extends BaseRpcController {
+  constructor(
+    rmqService: RmqService,
+    private readonly userService: UserService,
+  ) {
+    super(rmqService);
+  }
 
-  @Get('user/:id')
-  async getUser(@Param('id') id: string) {
-    return this.userService.getUser(id);
+  @MessagePattern('get_user_by_id')
+  async getUser(@Payload('id') id: string, @Ctx() ctx: RmqContext) {
+    return this.handleMessage(ctx, () => this.userService.getUser(id));
   }
 }

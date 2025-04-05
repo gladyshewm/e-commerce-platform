@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ApiGatewayController } from './api-gateway.controller';
-import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
+import { RmqModule } from '@app/rmq';
+import { USER_SERVICE } from './constants/services.constant';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import * as Joi from 'joi';
         PORT: Joi.number().required().default(3000),
       }),
     }),
-    HttpModule,
+    RmqModule.register({ name: USER_SERVICE }),
   ],
   controllers: [ApiGatewayController],
   providers: [],

@@ -9,22 +9,50 @@ services:
       - ./server/apps/api-gateway/.env
     depends_on:
       - user-service
+    networks:
+      - default
     develop:
       watch:
         - path: ./server/apps/api-gateway
           target: /usr/src/app/apps/api-gateway
+          action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
           action: sync
 
   user-service:
     build:
       context: ./server
       dockerfile: apps/user/Dockerfile
-    ports:
-      - "3001:3000"
     env_file:
       - ./server/apps/user/.env
+    networks:
+      - default
     develop:
       watch:
         - path: ./server/apps/user
           target: /usr/src/app/apps/user
           action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
+          action: sync
+
+  rmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - default
+      - rmq_network
+
+networks:
+  default:
+    driver: bridge
+
+  rmq_network:
+    driver: bridge

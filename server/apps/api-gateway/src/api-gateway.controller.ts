@@ -1,15 +1,19 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
+import { Controller, Get, Inject, Param } from '@nestjs/common';
+import { USER_SERVICE } from './constants/services.constant';
+import { ClientProxy } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs';
 
 @Controller()
 export class ApiGatewayController {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
+  ) {}
 
   @Get('/users/:id')
   async getUser(@Param('id') id: string) {
-    const response = await this.httpService.axiosRef.get(
-      `http://localhost:3001/users/${id}`,
+    const user = await lastValueFrom(
+      this.userServiceClient.send('get_user_by_id', { id }),
     );
-    return response.data;
+    return user;
   }
 }
