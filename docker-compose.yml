@@ -8,7 +8,8 @@ services:
     env_file:
       - ./server/apps/api-gateway/.env
     depends_on:
-      - user-service
+      - auth
+      - user
     networks:
       - default
     develop:
@@ -20,7 +21,7 @@ services:
           target: /usr/src/app/libs
           action: sync
 
-  user-service:
+  user:
     build:
       context: ./server
       dockerfile: apps/user/Dockerfile
@@ -32,6 +33,23 @@ services:
       watch:
         - path: ./server/apps/user
           target: /usr/src/app/apps/user
+          action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
+          action: sync
+
+  auth:
+    build:
+      context: ./server
+      dockerfile: apps/auth/Dockerfile
+    env_file:
+      - ./server/apps/auth/.env
+    networks:
+      - default
+    develop:
+      watch:
+        - path: ./server/apps/auth
+          target: /usr/src/app/apps/auth
           action: sync
         - path: ./server/libs
           target: /usr/src/app/libs

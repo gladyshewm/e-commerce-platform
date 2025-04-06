@@ -7,6 +7,8 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
+import { GetUserByIdPayload } from './types/get-user-by-id-payload.interface';
+import { GetUserByNamePayload } from './types/get-user-by-name-payload.interface';
 
 @Controller()
 export class UserController extends BaseRpcController {
@@ -18,7 +20,20 @@ export class UserController extends BaseRpcController {
   }
 
   @MessagePattern('get_user_by_id')
-  async getUser(@Payload('id') id: string, @Ctx() ctx: RmqContext) {
-    return this.handleMessage(ctx, () => this.userService.getUser(id));
+  async getUserById(
+    @Payload() payload: GetUserByIdPayload,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () => this.userService.getUserById(payload));
+  }
+
+  @MessagePattern('get_user_by_name')
+  async getUserByName(
+    @Payload() payload: GetUserByNamePayload,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.userService.getUserByName(payload),
+    );
   }
 }
