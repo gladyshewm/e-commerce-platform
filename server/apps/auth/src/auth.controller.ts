@@ -7,8 +7,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
-import { ValidateUserPayload } from './types/validate-user-payload.interface';
-import { LoginPayload } from './types/login-payload.interface';
+import { LoginPayload, ValidateUserPayload } from '@app/common/contracts/auth';
 
 @Controller()
 export class AuthController extends BaseRpcController {

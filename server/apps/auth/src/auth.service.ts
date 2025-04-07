@@ -3,10 +3,13 @@ import { USER_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
-import { LoginResponse, User, ValidateUserResponse } from '@app/common/types';
-import { ValidateUserPayload } from './types/validate-user-payload.interface';
-import { LoginPayload } from './types/login-payload.interface';
+import { LoginResponse, User } from '@app/common/contracts';
 import * as bcrypt from 'bcrypt';
+import {
+  LoginPayload,
+  ValidateUserPayload,
+  ValidateUserResponse,
+} from '@app/common/contracts/auth';
 
 @Injectable()
 export class AuthService {

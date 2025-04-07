@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ApiGatewayController } from './api-gateway.controller';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
-import { RmqModule } from '@app/rmq';
-import { AUTH_SERVICE, USER_SERVICE } from '@app/common/constants';
-import { JwtStrategy, LocalStrategy } from '@app/common/auth';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -13,12 +11,15 @@ import { JwtStrategy, LocalStrategy } from '@app/common/auth';
       envFilePath: './apps/api-gateway/.env',
       validationSchema: Joi.object({
         PORT: Joi.number().required().default(3000),
+        JWT_SECRET: Joi.string().required(),
+        JWT_EXPIRATION_TIME: Joi.string().required(),
+        RMQ_URI: Joi.string().required(),
+        RMQ_USER_QUEUE: Joi.string().required(),
+        RMQ_AUTH_QUEUE: Joi.string().required(),
       }),
     }),
-    RmqModule.register({ name: AUTH_SERVICE }),
-    RmqModule.register({ name: USER_SERVICE }),
+    AuthModule,
+    UserModule,
   ],
-  controllers: [ApiGatewayController],
-  providers: [JwtStrategy, LocalStrategy],
 })
 export class ApiGatewayModule {}

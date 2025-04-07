@@ -4,7 +4,7 @@ import { Strategy } from 'passport-local';
 import { AUTH_SERVICE } from '../constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
-import { ValidateUserResponse } from '../types';
+import { ValidateUserResponse } from '../contracts/auth';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {

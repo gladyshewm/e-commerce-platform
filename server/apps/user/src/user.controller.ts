@@ -7,8 +7,10 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
-import { GetUserByIdPayload } from './types/get-user-by-id-payload.interface';
-import { GetUserByNamePayload } from './types/get-user-by-name-payload.interface';
+import {
+  GetUserByIdPayload,
+  GetUserByNamePayload,
+} from '@app/common/contracts/user';
 
 @Controller()
 export class UserController extends BaseRpcController {
