@@ -3,9 +3,13 @@ import { ApiGatewayModule } from './api-gateway.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from '@app/logger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(ApiGatewayModule);
+  const app = await NestFactory.create(ApiGatewayModule, {
+    logger: WinstonModule.createLogger(winstonConfig),
+  });
   const configService = app.get(ConfigService);
   const config = new DocumentBuilder()
     .setTitle('E-commerce API')

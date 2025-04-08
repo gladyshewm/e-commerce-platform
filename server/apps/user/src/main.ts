@@ -3,7 +3,8 @@ import { UserModule } from './user.module';
 import { MicroserviceOptions } from '@nestjs/microservices';
 import { getRmqOptions } from '@app/rmq';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from '@app/logger';
 
 async function bootstrap() {
   const appContext = await NestFactory.createApplicationContext(UserModule);
@@ -14,7 +15,10 @@ async function bootstrap() {
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     UserModule,
-    getRmqOptions(rmqUri, queue),
+    {
+      ...getRmqOptions(rmqUri, queue),
+      logger: WinstonModule.createLogger(winstonConfig),
+    },
   );
 
   await app.listen();

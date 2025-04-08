@@ -26,6 +26,12 @@
         "libs/common/src/*",
         "libs/common/src/*"
       ],
+      "@app/logger": [
+        "libs/logger/src"
+      ],
+      "@app/logger/*": [
+        "libs/logger/src/*"
+      ],
       "@app/rmq": [
         "libs/rmq/src"
       ],
