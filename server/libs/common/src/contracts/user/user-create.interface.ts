@@ -1,4 +1,3 @@
-export interface CreateUserPayload {
-  username: string;
-  password: string;
-}
+import { User } from './user.interface';
+
+export interface CreateUserPayload extends Omit<User, 'userId'> {}

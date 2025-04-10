@@ -1,4 +1,3 @@
-export interface LoginPayload {
-  userId: number;
-  username: string;
-}
+import { UserWithoutPassword } from '../user';
+
+export interface LoginPayload extends UserWithoutPassword {}

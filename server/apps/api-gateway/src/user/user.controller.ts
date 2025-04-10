@@ -1,6 +1,6 @@
 import { Controller, Get, Inject, Param, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '@app/common/auth';
-import { User } from '@app/common/contracts';
+import { UserWithoutPassword } from '@app/common/contracts/user';
 import { lastValueFrom } from 'rxjs';
 import { USER_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
@@ -24,15 +24,14 @@ export class UserController {
   @ApiResponse({
     status: 200,
     type: GetUserResponseDto,
-    description: 'Found user',
+    description: 'User has been successfully found',
   })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   async getUser(@Param() dto: GetUserDto): Promise<GetUserResponseDto> {
-    const user = await lastValueFrom<User>(
+    return lastValueFrom<UserWithoutPassword>(
       this.userServiceClient.send('get_user_by_id', dto),
     );
-    return user;
   }
 }

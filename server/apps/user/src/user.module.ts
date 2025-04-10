@@ -1,8 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RmqModule } from '../../../libs/rmq/src';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { UserEntity } from './entities/user.entity';
 
 @Module({
   imports: [
@@ -10,9 +12,24 @@ import { RmqModule } from '../../../libs/rmq/src';
       isGlobal: true,
       envFilePath: './apps/user/.env',
     }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService): TypeOrmModuleOptions => ({
+        type: 'postgres',
+        host: configService.get<string>('POSTGRES_HOST'),
+        port: +configService.get<string>('POSTGRES_PORT'),
+        username: configService.get<string>('POSTGRES_USER'),
+        password: configService.get<string>('POSTGRES_PASSWORD'),
+        database: configService.get<string>('POSTGRES_DB'),
+        autoLoadEntities: true,
+        synchronize: true,
+      }),
+      inject: [ConfigService],
+    }),
+    TypeOrmModule.forFeature([UserEntity]),
     RmqModule,
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [Logger, UserService],
 })
 export class UserModule {}

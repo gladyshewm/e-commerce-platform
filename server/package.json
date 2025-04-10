@@ -28,6 +28,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.13",
     "@nestjs/swagger": "^11.1.1",
+    "@nestjs/typeorm": "^11.0.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.7",
     "bcrypt": "^5.1.1",
@@ -38,8 +39,10 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
+    "pg": "^8.14.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "typeorm": "^0.3.22",
     "winston": "^3.17.0"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -17,9 +17,11 @@ import { PassportModule } from '@nestjs/passport';
     PassportModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.get<string>('JWT_ACCESS_SECRET'),
         signOptions: {
-          expiresIn: configService.get<string | number>('JWT_EXPIRATION_TIME'),
+          expiresIn: configService.get<string | number>(
+            'JWT_ACCESS_SECRET_EXPIRATION_TIME',
+          ),
         },
       }),
       inject: [ConfigService],
@@ -28,6 +30,6 @@ import { PassportModule } from '@nestjs/passport';
     RmqModule.register({ name: AUTH_SERVICE }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
+  providers: [Logger, AuthService, JwtStrategy, LocalStrategy],
 })
 export class AuthModule {}

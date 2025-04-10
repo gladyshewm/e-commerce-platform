@@ -1,4 +1,3 @@
-export interface ValidateUserResponse {
-  userId: number;
-  username: string;
-}
+import { UserWithoutPassword } from '../user';
+
+export interface ValidateUserResponse extends UserWithoutPassword {}

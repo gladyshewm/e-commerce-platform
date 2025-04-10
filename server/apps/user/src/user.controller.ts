@@ -8,6 +8,7 @@ import {
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
 import {
+  CreateUserPayload,
   GetUserByIdPayload,
   GetUserByNamePayload,
 } from '@app/common/contracts/user';
@@ -19,6 +20,14 @@ export class UserController extends BaseRpcController {
     private readonly userService: UserService,
   ) {
     super(rmqService);
+  }
+
+  @MessagePattern('create_user')
+  async createUser(
+    @Payload() payload: CreateUserPayload,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () => this.userService.createUser(payload));
   }
 
   @MessagePattern('get_user_by_id')

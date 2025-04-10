@@ -1,4 +1,4 @@
-import { LoginResponse } from '@app/common/contracts';
+import { LoginResponse } from '@app/common/contracts/auth';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginResponseDto implements LoginResponse {
