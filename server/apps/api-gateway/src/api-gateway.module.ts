@@ -13,6 +13,8 @@ import { UserModule } from './user/user.module';
         PORT: Joi.number().required().default(3000),
         JWT_ACCESS_SECRET: Joi.string().required(),
         JWT_ACCESS_SECRET_EXPIRATION_TIME: Joi.string().required(),
+        JWT_REFRESH_SECRET: Joi.string().required(),
+        JWT_REFRESH_SECRET_EXPIRATION_TIME: Joi.string().required(),
         RMQ_URI: Joi.string().required(),
         RMQ_USER_QUEUE: Joi.string().required(),
         RMQ_AUTH_QUEUE: Joi.string().required(),

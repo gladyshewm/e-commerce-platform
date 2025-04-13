@@ -4,11 +4,13 @@ import {
   CreateUserPayload,
   GetUserByIdPayload,
   GetUserByNamePayload,
+  User,
+  UserWithoutPassword,
 } from '@app/common/contracts/user';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserEntity } from './entities/user.entity';
 import { RpcException } from '@nestjs/microservices';
+import { UserEntity } from '@app/common/entities';
 
 @Injectable()
 export class UserService {
@@ -19,9 +21,7 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async createUser(
-    payload: CreateUserPayload,
-  ): Promise<Omit<UserEntity, 'password'>> {
+  async createUser(payload: CreateUserPayload): Promise<UserWithoutPassword> {
     const existingUser = await this.userRepository.findOneBy({
       username: payload.username,
     });
@@ -40,14 +40,14 @@ export class UserService {
       password: hashedPassword,
     });
     const saved = await this.userRepository.save(user);
-    const { password, ...result } = saved;
 
-    return result;
+    return {
+      userId: saved.id,
+      username: saved.username,
+    };
   }
 
-  async getUserById(
-    payload: GetUserByIdPayload,
-  ): Promise<Omit<UserEntity, 'password'>> {
+  async getUserById(payload: GetUserByIdPayload): Promise<UserWithoutPassword> {
     const { id } = payload;
     const user = await this.userRepository.findOneBy({ id: +id });
 
@@ -56,13 +56,13 @@ export class UserService {
       return null;
     }
 
-    const { password, ...result } = user;
-    return result;
+    return {
+      userId: user.id,
+      username: user.username,
+    };
   }
 
-  async getUserByName(
-    payload: GetUserByNamePayload,
-  ): Promise<UserEntity | null> {
+  async getUserByName(payload: GetUserByNamePayload): Promise<User | null> {
     const user = await this.userRepository.findOneBy({
       username: payload.username,
     });
@@ -72,6 +72,10 @@ export class UserService {
       return null;
     }
 
-    return user;
+    return {
+      userId: user.id,
+      username: user.username,
+      password: user.password,
+    };
   }
 }

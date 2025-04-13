@@ -2,16 +2,16 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { USER_SERVICE } from '@app/common/constants';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
-import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import {
   LoginResponse,
   LoginPayload,
   ValidateUserPayload,
   ValidateUserResponse,
+  LogoutPayload,
 } from '@app/common/contracts/auth';
 import { User } from '@app/common/contracts/user';
-import { ConfigService } from '@nestjs/config';
+import { TokenService } from './token.service';
 
 @Injectable()
 export class AuthService {
@@ -19,8 +19,7 @@ export class AuthService {
 
   constructor(
     @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
-    private jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly tokenService: TokenService,
   ) {}
 
   async validateUser(
@@ -56,61 +55,81 @@ export class AuthService {
   }
 
   async login(loginPayload: LoginPayload): Promise<LoginResponse> {
-    // TODO:
-    // const tokens = await this.getTokens(
-    //   String(loginPayload.userId),
-    //   loginPayload.username,
-    // );
-    // await this.updateRefreshToken(
-    //   String(loginPayload.userId),
-    //   tokens.refreshToken,
-    // );
-    const payload = {
-      username: loginPayload.username,
-      sub: loginPayload.userId,
-    };
-    return { access_token: this.jwtService.sign(payload) };
-  }
-
-  ///////////////////////// TODO: refresh
-
-  async getTokens(userId: string, username: string) {
-    const payload = { sub: userId, username };
-
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-        expiresIn: this.configService.get<string | number>(
-          'JWT_ACCESS_SECRET_EXPIRATION_TIME',
-        ),
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string | number>(
-          'JWT_REFRESH_SECRET_EXPIRATION_TIME',
-        ),
-      }),
-    ]);
-
-    return { accessToken, refreshToken };
-  }
-
-  async updateRefreshToken(userId: string, refreshToken: string) {
-    const hashed = await bcrypt.hash(refreshToken, 10);
-
-    await lastValueFrom(
-      this.userServiceClient.emit('update_refresh_token', {
-        userId,
-        hashedRefreshToken: hashed,
-      }),
+    const tokens = await this.tokenService.getTokens(
+      String(loginPayload.userId),
+      loginPayload.username,
     );
+
+    await this.tokenService.updateRefreshToken(
+      String(loginPayload.userId),
+      tokens.refreshToken,
+    );
+
+    return tokens;
   }
 
-  async removeRefreshToken(userId: string) {
-    await lastValueFrom(
-      this.userServiceClient.emit('remove_refresh_token', {
-        userId,
-      }),
+  async refresh(payload: LogoutPayload): Promise<LoginResponse> {
+    const { refreshToken } = payload;
+    const verifiedRefreshToken =
+      await this.tokenService.verifyRefreshToken(refreshToken);
+
+    if (!verifiedRefreshToken) {
+      throw new RpcException({
+        message: 'Invalid refresh token',
+        statusCode: HttpStatus.UNAUTHORIZED,
+      });
+    }
+
+    const tokenRecord = await this.tokenService.findToken(refreshToken);
+
+    if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
+      throw new RpcException({
+        message: 'Refresh token is invalid or expired',
+        statusCode: HttpStatus.UNAUTHORIZED,
+      });
+    }
+
+    const tokens = await this.tokenService.getTokens(
+      String(tokenRecord.user.id),
+      tokenRecord.user.username,
     );
+
+    await this.tokenService.removeRefreshTokenById(tokenRecord.id);
+    await this.tokenService.updateRefreshToken(
+      String(tokenRecord.user.id),
+      tokens.refreshToken,
+    );
+
+    return tokens;
+  }
+
+  async logout(logoutPayload: LogoutPayload) {
+    const verifiedRefreshToken = await this.tokenService.verifyRefreshToken(
+      logoutPayload.refreshToken,
+    );
+
+    if (!verifiedRefreshToken) {
+      throw new RpcException({
+        message: 'Invalid refresh token',
+        statusCode: HttpStatus.UNAUTHORIZED,
+      });
+    }
+
+    await this.tokenService.removeRefreshToken(logoutPayload.refreshToken);
+  }
+
+  async logoutAll(logoutPayload: LogoutPayload) {
+    const verifiedRefreshToken = await this.tokenService.verifyRefreshToken(
+      logoutPayload.refreshToken,
+    );
+
+    if (!verifiedRefreshToken) {
+      throw new RpcException({
+        message: 'Invalid refresh token',
+        statusCode: HttpStatus.UNAUTHORIZED,
+      });
+    }
+
+    await this.tokenService.removeAllRefreshTokens(logoutPayload.refreshToken);
   }
 }

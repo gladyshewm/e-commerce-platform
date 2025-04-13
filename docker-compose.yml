@@ -56,6 +56,8 @@ services:
         - path: ./server/libs
           target: /usr/src/app/libs
           action: sync
+    depends_on:
+      - postgres
 
   rmq:
     image: rabbitmq:4-management-alpine

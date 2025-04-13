@@ -1,7 +1,7 @@
 import { LoginResponse } from '@app/common/contracts/auth';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class LoginResponseDto implements LoginResponse {
+export class LoginResponseDto implements Omit<LoginResponse, 'refreshToken'> {
   @ApiProperty({ example: 'token' })
-  access_token: string;
+  accessToken: string;
 }

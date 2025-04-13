@@ -11,6 +11,8 @@ import {
 import { BaseRpcController, RmqService } from '@app/rmq';
 import {
   LoginPayload,
+  LoginResponse,
+  LogoutPayload,
   RegisterResponse,
   ValidateUserPayload,
 } from '@app/common/contracts/auth';
@@ -62,13 +64,43 @@ export class AuthController extends BaseRpcController {
 
       return {
         user,
-        accessToken: tokens.access_token,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       };
     });
   }
 
   @MessagePattern('login')
-  async login(@Payload() payload: LoginPayload, @Ctx() ctx: RmqContext) {
+  async login(
+    @Payload() payload: LoginPayload,
+    @Ctx() ctx: RmqContext,
+  ): Promise<LoginResponse> {
     return this.handleMessage(ctx, () => this.authService.login(payload));
+  }
+
+  @MessagePattern('refresh')
+  async refresh(
+    @Payload() payload: LogoutPayload,
+    @Ctx() ctx: RmqContext,
+  ): Promise<LoginResponse> {
+    return this.handleMessage(ctx, () => this.authService.refresh(payload));
+  }
+
+  @MessagePattern('logout')
+  async logout(
+    @Payload() payload: LogoutPayload,
+    @Ctx() ctx: RmqContext,
+  ): Promise<{ success: boolean }> {
+    await this.handleMessage(ctx, () => this.authService.logout(payload));
+    return { success: true };
+  }
+
+  @MessagePattern('logout_all')
+  async logoutAll(
+    @Payload() payload: LogoutPayload,
+    @Ctx() ctx: RmqContext,
+  ): Promise<{ success: boolean }> {
+    await this.handleMessage(ctx, () => this.authService.logoutAll(payload));
+    return { success: true };
   }
 }

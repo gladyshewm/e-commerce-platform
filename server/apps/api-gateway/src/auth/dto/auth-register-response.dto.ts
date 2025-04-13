@@ -2,7 +2,9 @@ import { RegisterResponse } from '@app/common/contracts/auth';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class RegisterResponseDto implements RegisterResponse {
+export class RegisterResponseDto
+  implements Omit<RegisterResponse, 'refreshToken'>
+{
   @ApiProperty({
     type: 'object',
     properties: {

@@ -4,7 +4,7 @@ import { UserService } from './user.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RmqModule } from '../../../libs/rmq/src';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { UserEntity } from './entities/user.entity';
+import { TokenEntity, UserEntity } from '../../../libs/common/src/entities';
 
 @Module({
   imports: [
@@ -26,7 +26,7 @@ import { UserEntity } from './entities/user.entity';
       }),
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, TokenEntity]),
     RmqModule,
   ],
   controllers: [UserController],
