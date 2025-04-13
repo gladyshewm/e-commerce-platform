@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MinLength } from 'class-validator';
-import { CreateUserPayload } from '@app/common/contracts/user';
+import { RegisterPayload } from '@app/common/contracts/auth';
 
-export class RegisterDto implements CreateUserPayload {
+export class RegisterDto implements RegisterPayload {
   @ApiProperty({ example: 'john' })
   @IsString()
   @MinLength(3)

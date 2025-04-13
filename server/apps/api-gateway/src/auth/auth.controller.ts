@@ -20,10 +20,12 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoginDto } from './dto/auth-login.dto';
 import { LoginResponseDto } from './dto/auth-login-response.dto';
 import { RegisterDto } from './dto/auth-register.dto';
-import { User } from '@app/common/contracts/user';
+import { UserWithoutPassword } from '@app/common/contracts/user';
 import { LoginResponse, RegisterResponse } from '@app/common/contracts/auth';
 import { RegisterResponseDto } from './dto/auth-register-response.dto';
 import { Request, Response } from 'express';
+import { extractRequestMeta } from '../utils/request.util';
+import { setRefreshTokenCookie } from '../utils/cookie.util';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -44,21 +46,20 @@ export class AuthController {
   @Post('register')
   async register(
     @Body() dto: RegisterDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<RegisterResponseDto> {
+    const { userAgent, ipAddress } = extractRequestMeta(req);
     const response = await lastValueFrom<RegisterResponse>(
-      this.authServiceClient.send('register', dto).pipe(
-        catchError((error) => {
-          throw new HttpException(error.message, error.statusCode);
-        }),
-      ),
+      this.authServiceClient
+        .send('register', { ...dto, userAgent, ipAddress })
+        .pipe(
+          catchError((error) => {
+            throw new HttpException(error.message, error.statusCode);
+          }),
+        ),
     );
-
-    res.cookie('refreshToken', response.refreshToken, {
-      httpOnly: true,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    setRefreshTokenCookie(res, response.refreshToken);
 
     return {
       user: response.user,
@@ -77,22 +78,21 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(
-    @CurrentUser() user: User,
+    @CurrentUser() user: UserWithoutPassword,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
+    const { userAgent, ipAddress } = extractRequestMeta(req);
     const tokens = await lastValueFrom<LoginResponse>(
-      this.authServiceClient.send('login', user).pipe(
-        catchError((error) => {
-          throw new HttpException(error.message, error.statusCode);
-        }),
-      ),
+      this.authServiceClient
+        .send('login', { ...user, userAgent, ipAddress })
+        .pipe(
+          catchError((error) => {
+            throw new HttpException(error.message, error.statusCode);
+          }),
+        ),
     );
-
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    setRefreshTokenCookie(res, tokens.refreshToken);
 
     return { accessToken: tokens.accessToken };
   }
@@ -113,7 +113,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
-    const refreshToken = req.cookies['refreshToken'];
+    const { userAgent, ipAddress, refreshToken } = extractRequestMeta(req);
 
     if (!refreshToken) {
       this.logger.error('Failed to refresh tokens: Refresh token not found');
@@ -124,18 +124,15 @@ export class AuthController {
     }
 
     const tokens = await lastValueFrom<LoginResponse>(
-      this.authServiceClient.send('refresh', { refreshToken }).pipe(
-        catchError((error) => {
-          throw new HttpException(error.message, error.statusCode);
-        }),
-      ),
+      this.authServiceClient
+        .send('refresh', { refreshToken, userAgent, ipAddress })
+        .pipe(
+          catchError((error) => {
+            throw new HttpException(error.message, error.statusCode);
+          }),
+        ),
     );
-
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    setRefreshTokenCookie(res, tokens.refreshToken);
 
     return { accessToken: tokens.accessToken };
   }
@@ -156,7 +153,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string }> {
-    const refreshToken = req.cookies['refreshToken'];
+    const { refreshToken } = extractRequestMeta(req);
 
     if (!refreshToken) {
       this.logger.error('Failed to logout: Refresh token not found');
@@ -173,7 +170,6 @@ export class AuthController {
         }),
       ),
     );
-
     res.clearCookie('refreshToken');
 
     return { message: 'Logged out successfully' };
@@ -195,7 +191,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = req.cookies['refreshToken'];
+    const { refreshToken } = extractRequestMeta(req);
 
     if (!refreshToken) {
       this.logger.error(
@@ -214,7 +210,6 @@ export class AuthController {
         }),
       ),
     );
-
     res.clearCookie('refreshToken');
 
     return { message: 'Logged out from all sessions successfully' };

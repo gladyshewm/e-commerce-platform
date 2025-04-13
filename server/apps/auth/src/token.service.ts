@@ -102,7 +102,12 @@ export class TokenService {
     return null;
   }
 
-  async updateRefreshToken(userId: string, refreshToken: string) {
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     const hashed = await bcrypt.hash(refreshToken, 10);
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days FIXME:
@@ -110,6 +115,8 @@ export class TokenService {
       user: { id: +userId },
       refreshToken: hashed,
       expiresAt,
+      ipAddress,
+      userAgent,
     });
 
     await this.tokenRepository.save(token);

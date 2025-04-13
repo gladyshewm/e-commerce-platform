@@ -24,9 +24,9 @@ export class TokenEntity {
   @CreateDateColumn()
   createdAt: Date;
 
-  // @Column({ nullable: true })
-  // userAgent?: string;
+  @Column({ nullable: true })
+  userAgent?: string;
 
-  // @Column({ nullable: true })
-  // ipAddress?: string;
+  @Column({ nullable: true })
+  ipAddress?: string;
 }

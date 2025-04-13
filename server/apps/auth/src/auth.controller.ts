@@ -13,13 +13,12 @@ import {
   LoginPayload,
   LoginResponse,
   LogoutPayload,
+  RefreshPayload,
+  RegisterPayload,
   RegisterResponse,
   ValidateUserPayload,
 } from '@app/common/contracts/auth';
-import {
-  CreateUserPayload,
-  UserWithoutPassword,
-} from '@app/common/contracts/user';
+import { UserWithoutPassword } from '@app/common/contracts/user';
 import { USER_SERVICE } from '@app/common/constants';
 import { catchError, lastValueFrom } from 'rxjs';
 
@@ -45,12 +44,14 @@ export class AuthController extends BaseRpcController {
 
   @MessagePattern('register')
   async register(
-    @Payload() payload: CreateUserPayload,
+    @Payload() payload: RegisterPayload,
     @Ctx() ctx: RmqContext,
   ): Promise<RegisterResponse> {
     return this.handleMessage(ctx, async () => {
+      const { ipAddress, userAgent, ...credentials } = payload;
+
       const user = await lastValueFrom<UserWithoutPassword>(
-        this.userServiceClient.send('create_user', payload).pipe(
+        this.userServiceClient.send('create_user', credentials).pipe(
           catchError((error) => {
             throw new RpcException({
               message: error.message,
@@ -60,7 +61,11 @@ export class AuthController extends BaseRpcController {
         ),
       );
 
-      const tokens = await this.authService.login(user);
+      const tokens = await this.authService.login({
+        ...user,
+        ipAddress,
+        userAgent,
+      });
 
       return {
         user,
@@ -80,7 +85,7 @@ export class AuthController extends BaseRpcController {
 
   @MessagePattern('refresh')
   async refresh(
-    @Payload() payload: LogoutPayload,
+    @Payload() payload: RefreshPayload,
     @Ctx() ctx: RmqContext,
   ): Promise<LoginResponse> {
     return this.handleMessage(ctx, () => this.authService.refresh(payload));

@@ -9,6 +9,7 @@ import {
   ValidateUserPayload,
   ValidateUserResponse,
   LogoutPayload,
+  RefreshPayload,
 } from '@app/common/contracts/auth';
 import { User } from '@app/common/contracts/user';
 import { TokenService } from './token.service';
@@ -55,21 +56,22 @@ export class AuthService {
   }
 
   async login(loginPayload: LoginPayload): Promise<LoginResponse> {
-    const tokens = await this.tokenService.getTokens(
-      String(loginPayload.userId),
-      loginPayload.username,
-    );
+    const { userId, username, ipAddress, userAgent } = loginPayload;
+
+    const tokens = await this.tokenService.getTokens(String(userId), username);
 
     await this.tokenService.updateRefreshToken(
-      String(loginPayload.userId),
+      String(userId),
       tokens.refreshToken,
+      ipAddress,
+      userAgent,
     );
 
     return tokens;
   }
 
-  async refresh(payload: LogoutPayload): Promise<LoginResponse> {
-    const { refreshToken } = payload;
+  async refresh(payload: RefreshPayload): Promise<LoginResponse> {
+    const { refreshToken, ipAddress, userAgent } = payload;
     const verifiedRefreshToken =
       await this.tokenService.verifyRefreshToken(refreshToken);
 
@@ -98,6 +100,8 @@ export class AuthService {
     await this.tokenService.updateRefreshToken(
       String(tokenRecord.user.id),
       tokens.refreshToken,
+      ipAddress,
+      userAgent,
     );
 
     return tokens;
