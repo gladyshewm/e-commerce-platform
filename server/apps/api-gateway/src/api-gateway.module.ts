@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { seconds, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 
 @Module({
   imports: [
@@ -18,7 +20,29 @@ import { UserModule } from './user/user.module';
         RMQ_URI: Joi.string().required(),
         RMQ_USER_QUEUE: Joi.string().required(),
         RMQ_AUTH_QUEUE: Joi.string().required(),
+        REDIS_HOST: Joi.string().required(),
+        REDIS_PORT: Joi.number().required(),
       }),
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const redisHost = configService.get<string>('REDIS_HOST');
+        const redisPort = configService.get<number>('REDIS_PORT');
+        return {
+          throttlers: [
+            {
+              ttl: seconds(60),
+              limit: 10,
+            },
+          ],
+          errorMessage: 'Too many requests',
+          storage: new ThrottlerStorageRedisService(
+            `${redisHost}:${redisPort}`,
+          ),
+        };
+      },
     }),
     AuthModule,
     UserModule,
