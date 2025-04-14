@@ -12,8 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { LocalAuthGuard } from '@app/common/auth';
-import { CurrentUser } from '@app/common/decorators';
-import { catchError, lastValueFrom } from 'rxjs';
+import { lastValueFrom } from 'rxjs';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -26,6 +25,8 @@ import { RegisterResponseDto } from './dto/auth-register-response.dto';
 import { Request, Response } from 'express';
 import { extractRequestMeta } from '../utils/request.util';
 import { setRefreshTokenCookie } from '../utils/cookie.util';
+import { handleRpcError } from '../utils/rpc-exception.utils';
+import { CurrentUser } from '../decorators/user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -53,11 +54,7 @@ export class AuthController {
     const response = await lastValueFrom<RegisterResponse>(
       this.authServiceClient
         .send('register', { ...dto, userAgent, ipAddress })
-        .pipe(
-          catchError((error) => {
-            throw new HttpException(error.message, error.statusCode);
-          }),
-        ),
+        .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, response.refreshToken);
 
@@ -86,11 +83,7 @@ export class AuthController {
     const tokens = await lastValueFrom<LoginResponse>(
       this.authServiceClient
         .send('login', { ...user, userAgent, ipAddress })
-        .pipe(
-          catchError((error) => {
-            throw new HttpException(error.message, error.statusCode);
-          }),
-        ),
+        .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, tokens.refreshToken);
 
@@ -126,11 +119,7 @@ export class AuthController {
     const tokens = await lastValueFrom<LoginResponse>(
       this.authServiceClient
         .send('refresh', { refreshToken, userAgent, ipAddress })
-        .pipe(
-          catchError((error) => {
-            throw new HttpException(error.message, error.statusCode);
-          }),
-        ),
+        .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, tokens.refreshToken);
 
@@ -164,11 +153,9 @@ export class AuthController {
     }
 
     await lastValueFrom(
-      this.authServiceClient.send('logout', { refreshToken }).pipe(
-        catchError((error) => {
-          throw new HttpException(error.message, error.statusCode);
-        }),
-      ),
+      this.authServiceClient
+        .send('logout', { refreshToken })
+        .pipe(handleRpcError()),
     );
     res.clearCookie('refreshToken');
 
@@ -204,11 +191,9 @@ export class AuthController {
     }
 
     await lastValueFrom(
-      this.authServiceClient.send('logout_all', { refreshToken }).pipe(
-        catchError((error) => {
-          throw new HttpException(error.message, error.statusCode);
-        }),
-      ),
+      this.authServiceClient
+        .send('logout_all', { refreshToken })
+        .pipe(handleRpcError()),
     );
     res.clearCookie('refreshToken');
 

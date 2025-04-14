@@ -76,6 +76,7 @@ export class AuthService {
       await this.tokenService.verifyRefreshToken(refreshToken);
 
     if (!verifiedRefreshToken) {
+      this.logger.error(`Failed to refresh tokens: Invalid refresh token`);
       throw new RpcException({
         message: 'Invalid refresh token',
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -85,6 +86,7 @@ export class AuthService {
     const tokenRecord = await this.tokenService.findToken(refreshToken);
 
     if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
+      this.logger.error(`Failed to refresh tokens: Refresh token is invalid`);
       throw new RpcException({
         message: 'Refresh token is invalid or expired',
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -113,6 +115,7 @@ export class AuthService {
     );
 
     if (!verifiedRefreshToken) {
+      this.logger.error(`Failed to logout: Invalid refresh token`);
       throw new RpcException({
         message: 'Invalid refresh token',
         statusCode: HttpStatus.UNAUTHORIZED,
@@ -128,6 +131,7 @@ export class AuthService {
     );
 
     if (!verifiedRefreshToken) {
+      this.logger.error(`Failed to logout all sessions: Invalid refresh token`);
       throw new RpcException({
         message: 'Invalid refresh token',
         statusCode: HttpStatus.UNAUTHORIZED,

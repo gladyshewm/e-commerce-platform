@@ -3,8 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { seconds, ThrottlerModule } from '@nestjs/throttler';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -46,6 +47,12 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
     }),
     AuthModule,
     UserModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class ApiGatewayModule {}
