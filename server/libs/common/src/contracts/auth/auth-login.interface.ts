@@ -1,6 +1,6 @@
-import { UserWithoutPassword } from '../user';
+import { User } from '../user';
 
-export interface LoginPayload extends UserWithoutPassword {
+export interface LoginPayload extends Pick<User, 'id' | 'username'> {
   ipAddress?: string;
   userAgent?: string;
 }

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { LoginResponse } from '@app/common/contracts/auth';
+import { LoginResponse, RefreshPayload } from '@app/common/contracts/auth';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenEntity } from '@app/common/entities';
 import { LessThan, Repository } from 'typeorm';
@@ -27,7 +27,7 @@ export class TokenService {
     this.logger.log('Deleted expired tokens');
   }
 
-  async getTokens(userId: string, username: string): Promise<LoginResponse> {
+  async getTokens(userId: number, username: string): Promise<LoginResponse> {
     const payload = { userId, username };
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -79,7 +79,7 @@ export class TokenService {
   }
 
   async findToken(refreshToken: string) {
-    const payload = this.jwtService.decode(refreshToken) as { userId: string };
+    const payload = this.jwtService.decode(refreshToken) as { userId: number };
 
     if (!payload || !payload.userId) {
       this.logger.warn(`Failed to find token: User ID not found in token`);
@@ -87,7 +87,7 @@ export class TokenService {
     }
 
     const tokens = await this.tokenRepository.find({
-      where: { user: { id: +payload.userId } },
+      where: { user: { id: payload.userId } },
       relations: ['user'],
     });
 
@@ -102,17 +102,13 @@ export class TokenService {
     return null;
   }
 
-  async updateRefreshToken(
-    userId: string,
-    refreshToken: string,
-    ipAddress?: string,
-    userAgent?: string,
-  ) {
+  async updateRefreshToken(payload: RefreshPayload & { userId: number }) {
+    const { userId, refreshToken, ipAddress, userAgent } = payload;
     const hashed = await bcrypt.hash(refreshToken, 10);
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days FIXME:
     const token = this.tokenRepository.create({
-      user: { id: +userId },
+      user: { id: userId },
       refreshToken: hashed,
       expiresAt,
       ipAddress,

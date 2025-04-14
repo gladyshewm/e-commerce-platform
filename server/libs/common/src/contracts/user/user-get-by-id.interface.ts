@@ -1,3 +1,3 @@
 export interface GetUserByIdPayload {
-  id: string;
+  id: number;
 }

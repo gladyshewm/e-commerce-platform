@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 import { RegisterPayload } from '@app/common/contracts/auth';
 
 export class RegisterDto implements RegisterPayload {
@@ -7,6 +7,10 @@ export class RegisterDto implements RegisterPayload {
   @IsString()
   @MinLength(3)
   username: string;
+
+  @ApiProperty({ example: '6Mv4o@example.com' })
+  @IsEmail()
+  email: string;
 
   @ApiProperty({ example: 'changeme' })
   @IsString()

@@ -1,9 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 import { GetUserByIdPayload } from '@app/common/contracts/user';
+import { Type } from 'class-transformer';
 
 export class GetUserDto implements GetUserByIdPayload {
   @ApiProperty({ example: '1' })
-  @IsString()
-  id: string;
+  @IsNumber()
+  @IsNotEmpty()
+  @Type(() => Number)
+  id: number;
 }

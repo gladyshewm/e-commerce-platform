@@ -22,14 +22,17 @@ export class UserService {
   ) {}
 
   async createUser(payload: CreateUserPayload): Promise<UserWithoutPassword> {
-    const existingUser = await this.userRepository.findOneBy({
-      username: payload.username,
+    const existingUser = await this.userRepository.findOne({
+      where: [{ username: payload.username }, { email: payload.email }],
     });
 
     if (existingUser) {
-      this.logger.error('User already exists');
+      const existingField =
+        existingUser.username === payload.username ? 'username' : 'email';
+
+      this.logger.error(`User with this ${existingField} already exists`);
       throw new RpcException({
-        message: 'User already exists',
+        message: `User with this ${existingField} already exists`,
         statusCode: HttpStatus.CONFLICT,
       });
     }
@@ -37,29 +40,28 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(payload.password, 10);
     const user = this.userRepository.create({
       username: payload.username,
+      email: payload.email,
       password: hashedPassword,
     });
-    const saved = await this.userRepository.save(user);
+    const { password, ...saved } = await this.userRepository.save(user);
 
-    return {
-      userId: saved.id,
-      username: saved.username,
-    };
+    return saved;
   }
 
-  async getUserById(payload: GetUserByIdPayload): Promise<UserWithoutPassword> {
+  async getUserById(
+    payload: GetUserByIdPayload,
+  ): Promise<UserWithoutPassword | null> {
     const { id } = payload;
-    const user = await this.userRepository.findOneBy({ id: +id });
+    const { password, ...user } = await this.userRepository.findOneBy({
+      id,
+    });
 
     if (!user) {
       this.logger.warn(`User with id ${id} not found`);
       return null;
     }
 
-    return {
-      userId: user.id,
-      username: user.username,
-    };
+    return user;
   }
 
   async getUserByName(payload: GetUserByNamePayload): Promise<User | null> {
@@ -72,10 +74,6 @@ export class UserService {
       return null;
     }
 
-    return {
-      userId: user.id,
-      username: user.username,
-      password: user.password,
-    };
+    return user;
   }
 }

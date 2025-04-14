@@ -8,8 +8,13 @@ export class RegisterResponseDto
   @ApiProperty({
     type: 'object',
     properties: {
-      userId: { type: 'number', example: 1 },
+      id: { type: 'number', example: 1 },
       username: { type: 'string', example: 'john_doe' },
+      email: { type: 'string', example: '6Mv4o@example.com' },
+      role: { type: 'string', example: 'customer' },
+      isEmailVerified: { type: 'boolean', example: true },
+      createdAt: { type: 'string', example: '2021-01-01T00:00:00.000Z' },
+      updatedAt: { type: 'string', example: '2021-01-01T00:00:00.000Z' },
     },
   })
   user: UserWithoutPassword;

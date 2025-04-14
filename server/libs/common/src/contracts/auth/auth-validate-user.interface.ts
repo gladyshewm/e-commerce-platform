@@ -1,3 +1,4 @@
 import { User } from '../user';
 
-export interface ValidateUserPayload extends Omit<User, 'userId'> {}
+export interface ValidateUserPayload
+  extends Pick<User, 'username' | 'password'> {}
