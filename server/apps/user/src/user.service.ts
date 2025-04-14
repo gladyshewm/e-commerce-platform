@@ -48,30 +48,36 @@ export class UserService {
     return saved;
   }
 
-  async getUserById(
-    payload: GetUserByIdPayload,
-  ): Promise<UserWithoutPassword | null> {
+  async getUserById(payload: GetUserByIdPayload): Promise<UserWithoutPassword> {
     const { id } = payload;
-    const { password, ...user } = await this.userRepository.findOneBy({
+    const user = await this.userRepository.findOneBy({
       id,
     });
 
     if (!user) {
-      this.logger.warn(`User with id ${id} not found`);
-      return null;
+      this.logger.error(`User with id ${id} not found`);
+      throw new RpcException({
+        message: `User with id ${id} not found`,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
     }
 
-    return user;
+    const { password, ...userWithoutPassword } = user;
+
+    return userWithoutPassword;
   }
 
-  async getUserByName(payload: GetUserByNamePayload): Promise<User | null> {
+  async getUserByName(payload: GetUserByNamePayload): Promise<User> {
     const user = await this.userRepository.findOneBy({
       username: payload.username,
     });
 
     if (!user) {
-      this.logger.warn(`User with username ${payload.username} not found`);
-      return null;
+      this.logger.error(`User with username ${payload.username} not found`);
+      throw new RpcException({
+        message: `User with username ${payload.username} not found`,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
     }
 
     return user;

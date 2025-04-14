@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { USER_SERVICE } from '@app/common/constants';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
+import { catchError, lastValueFrom } from 'rxjs';
 import * as bcrypt from 'bcrypt';
 import {
   LoginResponse,
@@ -28,18 +28,19 @@ export class AuthService {
   ): Promise<ValidateUserResponse> {
     const { username, password } = payload;
     const user = await lastValueFrom(
-      this.userServiceClient.send<User | null>('get_user_by_name', {
-        username,
-      }),
+      this.userServiceClient
+        .send<User>('get_user_by_name', {
+          username,
+        })
+        .pipe(
+          catchError((error) => {
+            throw new RpcException({
+              message: error.message,
+              statusCode: error.statusCode,
+            });
+          }),
+        ),
     );
-
-    if (!user) {
-      this.logger.error(`Failed to validate user: Invalid credentials`);
-      throw new RpcException({
-        message: 'Invalid credentials',
-        statusCode: HttpStatus.UNAUTHORIZED,
-      });
-    }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
