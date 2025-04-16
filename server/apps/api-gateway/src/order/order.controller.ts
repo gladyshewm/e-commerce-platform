@@ -10,11 +10,11 @@ import { ApiTags } from '@nestjs/swagger';
 import { ORDER_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { JwtAuthGuard } from '@app/common/auth';
-import { CurrentUser } from '../decorators/user.decorator';
+import { CurrentUser } from '../common/decorators/user.decorator';
 import { User } from '@app/common/contracts/user';
 import { CreateOrderDto } from './dto/order-create.dto';
 import { lastValueFrom } from 'rxjs';
-import { handleRpcError } from '../utils/rpc-exception.utils';
+import { handleRpcError } from '../common/utils/rpc-exception.utils';
 
 @ApiTags('orders')
 @Controller('orders')
@@ -25,8 +25,8 @@ export class OrderController {
     @Inject(ORDER_SERVICE) private readonly orderServiceClient: ClientProxy,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
   @Post()
+  @UseGuards(JwtAuthGuard)
   async createOrder(
     @Body() dto: CreateOrderDto,
     @CurrentUser() user: Pick<User, 'id' | 'username'>,

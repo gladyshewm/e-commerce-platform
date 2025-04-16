@@ -3,10 +3,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { ProductModule } from './product/product.module';
+import { OrderModule } from './order/order.module';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
-import { OrderModule } from './order/order.module';
 import { JwtStrategy } from '@app/common/auth';
 
 @Module({
@@ -21,8 +22,10 @@ import { JwtStrategy } from '@app/common/auth';
         JWT_REFRESH_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET_EXPIRATION_TIME: Joi.string().required(),
         RMQ_URI: Joi.string().required(),
-        RMQ_USER_QUEUE: Joi.string().required(),
         RMQ_AUTH_QUEUE: Joi.string().required(),
+        RMQ_USER_QUEUE: Joi.string().required(),
+        RMQ_PRODUCT_QUEUE: Joi.string().required(),
+        RMQ_ORDER_QUEUE: Joi.string().required(),
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().required(),
       }),
@@ -49,6 +52,7 @@ import { JwtStrategy } from '@app/common/auth';
     }),
     AuthModule,
     UserModule,
+    ProductModule,
     OrderModule,
   ],
   providers: [

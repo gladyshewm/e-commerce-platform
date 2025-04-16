@@ -23,10 +23,10 @@ import { UserWithoutPassword } from '@app/common/contracts/user';
 import { LoginResponse, RegisterResponse } from '@app/common/contracts/auth';
 import { RegisterResponseDto } from './dto/auth-register-response.dto';
 import { Request, Response } from 'express';
-import { extractRequestMeta } from '../utils/request.util';
-import { setRefreshTokenCookie } from '../utils/cookie.util';
-import { handleRpcError } from '../utils/rpc-exception.utils';
-import { CurrentUser } from '../decorators/user.decorator';
+import { extractRequestMeta } from '../common/utils/request.util';
+import { setRefreshTokenCookie } from '../common/utils/cookie.util';
+import { handleRpcError } from '../common/utils/rpc-exception.utils';
+import { CurrentUser } from '../common/decorators/user.decorator';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -37,6 +37,7 @@ export class AuthController {
     @Inject(AUTH_SERVICE) private readonly authServiceClient: ClientProxy,
   ) {}
 
+  @Post('register')
   @ApiOperation({ summary: 'Register new user and return tokens' })
   @ApiResponse({
     status: 201,
@@ -44,7 +45,6 @@ export class AuthController {
     description: 'User registered and authenticated',
   })
   @ApiResponse({ status: 409, description: 'User already exists' })
-  @Post('register')
   async register(
     @Body() dto: RegisterDto,
     @Req() req: Request,
@@ -64,6 +64,8 @@ export class AuthController {
     };
   }
 
+  @Post('login')
+  @UseGuards(LocalAuthGuard)
   @ApiOperation({ summary: 'User authorization' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -72,8 +74,6 @@ export class AuthController {
     description: 'User authorized',
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  @UseGuards(LocalAuthGuard)
-  @Post('login')
   async login(
     @CurrentUser() user: UserWithoutPassword,
     @Req() req: Request,
@@ -90,6 +90,8 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a pair of access and refresh tokens' })
   @ApiResponse({
     status: 201,
@@ -100,8 +102,6 @@ export class AuthController {
     status: 401,
     description: 'Refresh token invalid/expired/not found',
   })
-  @Post('refresh')
-  @HttpCode(HttpStatus.OK)
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -126,6 +126,8 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User logout' })
   @ApiResponse({
     status: 200,
@@ -136,8 +138,6 @@ export class AuthController {
     status: 401,
     description: 'Refresh token invalid/expired/not found',
   })
-  @Post('logout')
-  @HttpCode(HttpStatus.OK)
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -162,6 +162,8 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
+  @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User logout from all sessions' })
   @ApiResponse({
     status: 200,
@@ -172,8 +174,6 @@ export class AuthController {
     status: 401,
     description: 'Refresh token invalid/expired/not found',
   })
-  @HttpCode(HttpStatus.OK)
-  @Post('logout-all')
   async logoutAll(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,

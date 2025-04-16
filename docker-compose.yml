@@ -60,6 +60,25 @@ services:
           action: sync
     depends_on:
       - postgres
+
+  product:
+    build:
+      context: ./server
+      dockerfile: apps/product/Dockerfile
+    env_file:
+      - ./server/apps/product/.env
+    networks:
+      - default
+    develop:
+      watch:
+        - path: ./server/apps/product
+          target: /usr/src/app/apps/product
+          action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
+          action: sync
+    depends_on:
+      - postgres
   
   order:
     build:

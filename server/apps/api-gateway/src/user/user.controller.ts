@@ -12,8 +12,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { GetUserResponseDto } from './dto/user-get-response.dto';
-import { handleRpcError } from '../utils/rpc-exception.utils';
-import { CurrentUser } from '../decorators/user.decorator';
+import { handleRpcError } from '../common/utils/rpc-exception.utils';
+import { CurrentUser } from '../common/decorators/user.decorator';
 import { seconds, Throttle } from '@nestjs/throttler';
 
 @ApiTags('users')
@@ -24,6 +24,8 @@ export class UserController {
     @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
   ) {}
 
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user' })
   @ApiResponse({
     status: 200,
@@ -31,8 +33,6 @@ export class UserController {
     description: 'Current user profile has been successfully retrieved',
   })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
   async getMe(
     @CurrentUser() user: Pick<User, 'id' | 'username'>,
   ): Promise<GetUserResponseDto> {
@@ -43,6 +43,8 @@ export class UserController {
     );
   }
 
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get user by id' })
   @ApiResponse({
     status: 200,
@@ -50,8 +52,6 @@ export class UserController {
     description: 'User has been successfully found',
   })
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
   async getUser(@Param() dto: GetUserDto): Promise<GetUserResponseDto> {
     return lastValueFrom<UserWithoutPassword>(
       this.userServiceClient.send('get_user_by_id', dto).pipe(handleRpcError()),
