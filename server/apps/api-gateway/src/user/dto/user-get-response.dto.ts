@@ -1,6 +1,6 @@
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '@app/common/entities';
+import { UserRole } from '@app/common/database/enums';
 
 export class GetUserResponseDto implements UserWithoutPassword {
   @ApiProperty({ example: '1' })

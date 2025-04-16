@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { LoginResponse, RefreshPayload } from '@app/common/contracts/auth';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TokenEntity } from '@app/common/entities';
+import { TokenEntity } from '@app/common/database/entities';
 import { LessThan, Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 

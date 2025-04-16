@@ -1,10 +1,10 @@
 import { Logger, Module } from '@nestjs/common';
-import { UserController } from './user.controller';
-import { UserService } from './user.service';
+import { OrderController } from './order.controller';
+import { OrderService } from './order.service';
 import { ConfigModule } from '@nestjs/config';
-import { RmqModule } from '@app/rmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from '@app/common/database/entities';
+import { RmqModule } from '@app/rmq';
+import { OrderEntity } from '@app/common/database/entities';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import * as Joi from 'joi';
 
@@ -12,10 +12,10 @@ import * as Joi from 'joi';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: './apps/user/.env',
+      envFilePath: './apps/order/.env',
       validationSchema: Joi.object({
         RMQ_URI: Joi.string().required(),
-        RMQ_USER_QUEUE: Joi.string().required(),
+        RMQ_ORDER_QUEUE: Joi.string().required(),
         POSTGRES_HOST: Joi.string().required(),
         POSTGRES_PORT: Joi.number().required(),
         POSTGRES_USER: Joi.string().required(),
@@ -24,10 +24,10 @@ import * as Joi from 'joi';
       }),
     }),
     TypeOrmConfigModule,
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([OrderEntity]),
     RmqModule,
   ],
-  controllers: [UserController],
-  providers: [Logger, UserService],
+  controllers: [OrderController],
+  providers: [Logger, OrderService],
 })
-export class UserModule {}
+export class OrderModule {}

@@ -10,7 +10,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RpcException } from '@nestjs/microservices';
-import { UserEntity } from '@app/common/entities';
+import { UserEntity } from '@app/common/database/entities';
 
 @Injectable()
 export class UserService {

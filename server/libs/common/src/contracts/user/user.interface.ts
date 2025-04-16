@@ -1,4 +1,4 @@
-import { UserRole } from '../../entities';
+import { UserRole } from '../../database/enums';
 
 export interface User {
   id: number;

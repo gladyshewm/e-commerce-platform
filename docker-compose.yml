@@ -8,6 +8,8 @@ services:
     env_file:
       - ./server/apps/api-gateway/.env
     depends_on:
+      - redis
+      - rmq
       - auth
       - user
     networks:
@@ -20,6 +22,25 @@ services:
         - path: ./server/libs
           target: /usr/src/app/libs
           action: sync
+
+  auth:
+    build:
+      context: ./server
+      dockerfile: apps/auth/Dockerfile
+    env_file:
+      - ./server/apps/auth/.env
+    networks:
+      - default
+    develop:
+      watch:
+        - path: ./server/apps/auth
+          target: /usr/src/app/apps/auth
+          action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
+          action: sync
+    depends_on:
+      - postgres
 
   user:
     build:
@@ -39,19 +60,19 @@ services:
           action: sync
     depends_on:
       - postgres
-
-  auth:
+  
+  order:
     build:
       context: ./server
-      dockerfile: apps/auth/Dockerfile
+      dockerfile: apps/order/Dockerfile
     env_file:
-      - ./server/apps/auth/.env
+      - ./server/apps/order/.env
     networks:
       - default
     develop:
       watch:
-        - path: ./server/apps/auth
-          target: /usr/src/app/apps/auth
+        - path: ./server/apps/order
+          target: /usr/src/app/apps/order
           action: sync
         - path: ./server/libs
           target: /usr/src/app/libs

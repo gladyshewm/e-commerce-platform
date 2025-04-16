@@ -7,12 +7,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { TokenEntity } from './token.entity';
-
-export enum UserRole {
-  ADMIN = 'admin',
-  MANAGER = 'manager',
-  CUSTOMER = 'customer',
-}
+import { OrderEntity } from './order.entity';
+import { UserRole } from '../enums';
 
 @Entity('users')
 export class UserEntity {
@@ -38,16 +34,15 @@ export class UserEntity {
   @Column({ default: false })
   isEmailVerified: boolean;
 
-  @OneToMany(() => TokenEntity, (token) => token.user)
-  tokens: TokenEntity[];
-
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // TODO:
-  // @OneToMany()
-  // orders: Order[];
+  @OneToMany(() => TokenEntity, (token) => token.user, { cascade: true })
+  tokens: TokenEntity[];
+
+  @OneToMany(() => OrderEntity, (order) => order.user, { cascade: true })
+  orders: OrderEntity[];
 }

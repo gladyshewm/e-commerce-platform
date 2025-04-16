@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as Joi from 'joi';
 import { AuthModule } from './auth/auth.module';
@@ -6,6 +6,8 @@ import { UserModule } from './user/user.module';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
+import { OrderModule } from './order/order.module';
+import { JwtStrategy } from '@app/common/auth';
 
 @Module({
   imports: [
@@ -47,8 +49,11 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     AuthModule,
     UserModule,
+    OrderModule,
   ],
   providers: [
+    Logger,
+    JwtStrategy,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
