@@ -1,5 +1,6 @@
 import { Product } from '@app/common/contracts/product';
 import { ApiProperty } from '@nestjs/swagger';
+import { CategoryDto } from './category.dto';
 
 export class ProductDto implements Product {
   @ApiProperty({ example: '1' })
@@ -25,4 +26,9 @@ export class ProductDto implements Product {
 
   @ApiProperty({ example: '2021-01-01T00:00:00.000Z' })
   updatedAt: Date;
+}
+
+export class ProductWithCategoryDto extends ProductDto {
+  @ApiProperty()
+  category: CategoryDto;
 }

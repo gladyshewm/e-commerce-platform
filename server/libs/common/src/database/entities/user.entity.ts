@@ -9,6 +9,7 @@ import {
 import { TokenEntity } from './token.entity';
 import { OrderEntity } from './order.entity';
 import { UserRole } from '../enums';
+import { ReviewEntity } from './review.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -45,4 +46,7 @@ export class UserEntity {
 
   @OneToMany(() => OrderEntity, (order) => order.user, { cascade: true })
   orders: OrderEntity[];
+
+  @OneToMany(() => ReviewEntity, (order) => order.user, { cascade: true })
+  reviews: ReviewEntity[];
 }

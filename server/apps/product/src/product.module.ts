@@ -6,7 +6,7 @@ import * as Joi from 'joi';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import { RmqModule } from '@app/rmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductEntity } from '@app/common/database/entities';
+import { CategoryEntity, ProductEntity } from '@app/common/database/entities';
 
 @Module({
   imports: [
@@ -24,7 +24,7 @@ import { ProductEntity } from '@app/common/database/entities';
       }),
     }),
     TypeOrmConfigModule,
-    TypeOrmModule.forFeature([ProductEntity]),
+    TypeOrmModule.forFeature([ProductEntity, CategoryEntity]),
     RmqModule,
   ],
   controllers: [ProductController],

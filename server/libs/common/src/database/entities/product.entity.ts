@@ -1,4 +1,14 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { CategoryEntity } from './category.entity';
+import { ReviewEntity } from './review.entity';
 
 @Entity('products')
 export class ProductEntity {
@@ -26,11 +36,11 @@ export class ProductEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // @ManyToOne(() => Category, (category) => category.products)
-  // category: Category;
+  @ManyToOne(() => CategoryEntity, (category) => category.products)
+  category: CategoryEntity;
 
-  // @OneToMany(() => Review, (review) => review.product)
-  // reviews: Review[];
+  @OneToMany(() => ReviewEntity, (review) => review.product)
+  reviews: ReviewEntity[];
 
   // @OneToOne(() => Inventory)
   // @JoinColumn()
