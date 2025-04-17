@@ -10,7 +10,7 @@ export class ProductDto implements Product {
   name: string;
 
   @ApiProperty({ example: 'Description 1' })
-  description: string;
+  description?: string;
 
   @ApiProperty({ example: 10 })
   price: number;

@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -25,6 +26,9 @@ import { Category, ProductWithCategory } from '@app/common/contracts/product';
 import { ProductWithCategoryDto } from './dto/product.dto';
 import { CreateCategoryDto } from './dto/category-create.dto';
 import { CategoryDto } from './dto/category.dto';
+import { CreateProductDto } from './dto/product-create.dto';
+import { UpdateProductDto } from './dto/product-update.dto';
+import { GetProductsQueryDto } from './dto/product-get.dto';
 
 @ApiTags('products')
 @Controller('products')
@@ -44,9 +48,75 @@ export class ProductController {
     description: 'Returns an array of products',
   })
   @ApiBearerAuth()
-  async getProducts(): Promise<ProductWithCategoryDto[]> {
+  async getProducts(
+    @Query() query: GetProductsQueryDto,
+  ): Promise<ProductWithCategoryDto[]> {
     return lastValueFrom<ProductWithCategory[]>(
-      this.productServiceClient.send('get_products', {}).pipe(handleRpcError()),
+      this.productServiceClient
+        .send('get_products', query)
+        .pipe(handleRpcError()),
+    );
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Create a new product' })
+  @ApiResponse({
+    status: 201,
+    type: ProductWithCategoryDto,
+    description: 'Returns the created product',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Product with the same name already exists',
+  })
+  @ApiBearerAuth()
+  async createProduct(
+    @Body() dto: CreateProductDto,
+  ): Promise<ProductWithCategoryDto> {
+    return lastValueFrom<ProductWithCategory>(
+      this.productServiceClient
+        .send('create_product', dto)
+        .pipe(handleRpcError()),
+    );
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update a product' })
+  @ApiResponse({
+    status: 200,
+    type: ProductWithCategoryDto,
+    description: 'Returns the updated product',
+  })
+  @ApiBearerAuth()
+  async updateProduct(
+    @Param('id') id: number,
+    @Body() dto: UpdateProductDto,
+  ): Promise<ProductWithCategoryDto> {
+    return lastValueFrom<ProductWithCategory>(
+      this.productServiceClient
+        .send('update_product', { id, ...dto })
+        .pipe(handleRpcError()),
+    );
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Delete a product' })
+  @ApiResponse({
+    status: 200,
+    type: ProductWithCategoryDto,
+    description: 'Returns the deleted product',
+  })
+  @ApiBearerAuth()
+  async deleteProduct(
+    @Param('id') id: number,
+  ): Promise<ProductWithCategoryDto> {
+    return lastValueFrom<ProductWithCategory>(
+      this.productServiceClient
+        .send('delete_product', { id })
+        .pipe(handleRpcError()),
     );
   }
 

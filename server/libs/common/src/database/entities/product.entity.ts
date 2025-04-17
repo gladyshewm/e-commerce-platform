@@ -18,7 +18,7 @@ export class ProductEntity {
   @Column()
   name: string;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   description: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
