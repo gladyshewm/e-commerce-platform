@@ -11,6 +11,8 @@ import {
   Category,
   CreateCategoryPayload,
   CreateProductPayload,
+  CreateReviewPayload,
+  DeleteReviewPayload,
   GetProductsQueryPayload,
 } from '@app/common/contracts/product';
 
@@ -56,6 +58,33 @@ export class ProductController extends BaseRpcController {
   @MessagePattern('delete_product')
   async deleteProduct(@Payload('id') id: number, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () => this.productService.deleteProduct(id));
+  }
+
+  // REVIEWS
+
+  @MessagePattern('get_reviews')
+  async getReviews(@Payload('id') id: number, @Ctx() ctx: RmqContext) {
+    return this.handleMessage(ctx, () => this.productService.getReviews(id));
+  }
+
+  @MessagePattern('create_review')
+  async createReview(
+    @Payload() payload: CreateReviewPayload,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.productService.createReview(payload),
+    );
+  }
+
+  @MessagePattern('delete_review')
+  async deleteReview(
+    @Payload() payload: DeleteReviewPayload,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.productService.deleteReview(payload),
+    );
   }
 
   // CATEGORIES

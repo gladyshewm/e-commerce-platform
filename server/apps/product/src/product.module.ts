@@ -6,7 +6,12 @@ import * as Joi from 'joi';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import { RmqModule } from '@app/rmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CategoryEntity, ProductEntity } from '@app/common/database/entities';
+import {
+  CategoryEntity,
+  ProductEntity,
+  ReviewEntity,
+} from '@app/common/database/entities';
+import { USER_SERVICE } from '@app/common/constants';
 
 @Module({
   imports: [
@@ -24,8 +29,9 @@ import { CategoryEntity, ProductEntity } from '@app/common/database/entities';
       }),
     }),
     TypeOrmConfigModule,
-    TypeOrmModule.forFeature([ProductEntity, CategoryEntity]),
+    TypeOrmModule.forFeature([ProductEntity, CategoryEntity, ReviewEntity]),
     RmqModule,
+    RmqModule.register({ name: USER_SERVICE }),
   ],
   controllers: [ProductController],
   providers: [Logger, ProductService],

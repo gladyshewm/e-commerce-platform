@@ -62,14 +62,22 @@ export class UserService {
       });
     }
 
-    const { password, ...userWithoutPassword } = user;
-
-    return userWithoutPassword;
+    return user;
   }
 
   async getUserByName(payload: GetUserByNamePayload): Promise<User> {
-    const user = await this.userRepository.findOneBy({
-      username: payload.username,
+    const user = await this.userRepository.findOne({
+      where: { username: payload.username },
+      select: [
+        'id',
+        'username',
+        'email',
+        'password',
+        'role',
+        'isEmailVerified',
+        'createdAt',
+        'updatedAt',
+      ],
     });
 
     if (!user) {
