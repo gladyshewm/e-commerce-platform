@@ -17,7 +17,7 @@ import {
 } from '@app/common/database/entities';
 import { Repository } from 'typeorm';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { USER_SERVICE } from '@app/common/constants';
+import { INVENTORY_SERVICE, USER_SERVICE } from '@app/common/constants';
 import { catchError, lastValueFrom } from 'rxjs';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 
@@ -33,6 +33,8 @@ export class ProductService {
     @InjectRepository(ReviewEntity)
     private readonly reviewRepository: Repository<ReviewEntity>,
     @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
+    @Inject(INVENTORY_SERVICE)
+    private readonly inventoryServiceClient: ClientProxy,
   ) {}
 
   async getProducts(
@@ -88,6 +90,13 @@ export class ProductService {
     });
 
     const saved = await this.productRepository.save(product);
+
+    this.inventoryServiceClient
+      .emit('product_created', {
+        productId: saved.id,
+      })
+      .subscribe();
+
     if (!payload.categoryId) return saved;
 
     const category = await this.categoryRepository.findOneBy({

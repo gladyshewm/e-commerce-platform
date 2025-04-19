@@ -1,25 +1,22 @@
 import { Logger, Module } from '@nestjs/common';
-import { ProductController } from './product.controller';
-import { ProductService } from './product.service';
+import { InventoryController } from './inventory.controller';
+import { InventoryService } from './inventory.service';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import { RmqModule } from '@app/rmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  CategoryEntity,
-  ProductEntity,
-  ReviewEntity,
-} from '@app/common/database/entities';
-import { INVENTORY_SERVICE, USER_SERVICE } from '@app/common/constants';
+import { InventoryEntity } from '@app/common/database/entities';
+import { PRODUCT_SERVICE } from '@app/common/constants';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: './apps/product/.env',
+      envFilePath: './apps/inventory/.env',
       validationSchema: Joi.object({
         RMQ_URI: Joi.string().required(),
+        RMQ_INVENTORY_QUEUE: Joi.string().required(),
         RMQ_PRODUCT_QUEUE: Joi.string().required(),
         POSTGRES_HOST: Joi.string().required(),
         POSTGRES_PORT: Joi.number().required(),
@@ -29,12 +26,11 @@ import { INVENTORY_SERVICE, USER_SERVICE } from '@app/common/constants';
       }),
     }),
     TypeOrmConfigModule,
-    TypeOrmModule.forFeature([ProductEntity, CategoryEntity, ReviewEntity]),
+    TypeOrmModule.forFeature([InventoryEntity]),
     RmqModule,
-    RmqModule.register({ name: USER_SERVICE }),
-    RmqModule.register({ name: INVENTORY_SERVICE }),
+    RmqModule.register({ name: PRODUCT_SERVICE }),
   ],
-  controllers: [ProductController],
-  providers: [Logger, ProductService],
+  controllers: [InventoryController],
+  providers: [Logger, InventoryService],
 })
-export class ProductModule {}
+export class InventoryModule {}

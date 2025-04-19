@@ -9,6 +9,7 @@ import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtStrategy } from '@app/common/auth';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { JwtStrategy } from '@app/common/auth';
         RMQ_USER_QUEUE: Joi.string().required(),
         RMQ_PRODUCT_QUEUE: Joi.string().required(),
         RMQ_ORDER_QUEUE: Joi.string().required(),
+        RMQ_INVENTORY_QUEUE: Joi.string().required(),
         REDIS_HOST: Joi.string().required(),
         REDIS_PORT: Joi.number().required(),
       }),
@@ -53,6 +55,7 @@ import { JwtStrategy } from '@app/common/auth';
     AuthModule,
     UserModule,
     ProductModule,
+    InventoryModule,
     OrderModule,
   ],
   providers: [

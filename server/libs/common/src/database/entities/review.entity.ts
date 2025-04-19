@@ -29,6 +29,8 @@ export class ReviewEntity {
   @ManyToOne(() => UserEntity, (user) => user.reviews)
   user: UserEntity;
 
-  @ManyToOne(() => ProductEntity, (product) => product.reviews)
+  @ManyToOne(() => ProductEntity, (product) => product.reviews, {
+    onDelete: 'CASCADE',
+  })
   product: ProductEntity;
 }

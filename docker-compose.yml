@@ -80,6 +80,25 @@ services:
     depends_on:
       - postgres
   
+  inventory:
+    build:
+      context: ./server
+      dockerfile: apps/inventory/Dockerfile
+    env_file:
+      - ./server/apps/inventory/.env
+    networks:
+      - default
+    develop:
+      watch:
+        - path: ./server/apps/inventory
+          target: /usr/src/app/apps/inventory
+          action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
+          action: sync
+    depends_on:
+      - postgres
+  
   order:
     build:
       context: ./server

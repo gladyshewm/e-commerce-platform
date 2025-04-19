@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { ProductService } from './product.service';
 import {
   Ctx,
+  EventPattern,
   MessagePattern,
   Payload,
   RmqContext,
@@ -42,6 +43,19 @@ export class ProductController extends BaseRpcController {
   ) {
     return this.handleMessage(ctx, () =>
       this.productService.createProduct(payload),
+    );
+  }
+
+  @EventPattern('inventory_create_failed')
+  async inventoryCreateFailedHandler(
+    @Payload() payload: { productId: number },
+    @Ctx() ctx: RmqContext,
+  ) {
+    await this.handleMessage(ctx, () =>
+      this.productService.deleteProduct(payload.productId),
+    );
+    this.logger.warn(
+      `Cancelled product creation: ${payload.productId} due to inventory creation failure`,
     );
   }
 

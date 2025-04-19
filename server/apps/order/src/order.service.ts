@@ -10,6 +10,7 @@ export class OrderService {
 
   constructor(private readonly dataSource: DataSource) {}
 
+  // TODO: SAGA
   async createOrder(payload: CreateOrderPayload) {
     this.logger.debug('create order');
     const queryRunner = this.dataSource.createQueryRunner();
@@ -42,7 +43,11 @@ export class OrderService {
 
       return { success: true, orderId: order.id };
     } catch (error) {
-      this.logger.debug('rollback');
+      this.logger.error(
+        `Failed to create order: ${error.message}`,
+        error.stack,
+      );
+      this.logger.log('Rolling back transaction');
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();

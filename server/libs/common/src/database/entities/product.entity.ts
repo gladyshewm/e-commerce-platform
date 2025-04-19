@@ -2,13 +2,16 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { CategoryEntity } from './category.entity';
 import { ReviewEntity } from './review.entity';
+import { InventoryEntity } from './inventory.entity';
 
 @Entity('products')
 export class ProductEntity {
@@ -42,7 +45,7 @@ export class ProductEntity {
   @OneToMany(() => ReviewEntity, (review) => review.product)
   reviews: ReviewEntity[];
 
-  // @OneToOne(() => Inventory)
-  // @JoinColumn()
-  // inventory: Inventory;
+  @OneToOne(() => InventoryEntity)
+  @JoinColumn()
+  inventory: InventoryEntity;
 }
