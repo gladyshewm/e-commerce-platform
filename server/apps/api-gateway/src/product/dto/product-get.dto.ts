@@ -1,7 +1,7 @@
 import { GetProductsQueryPayload } from '@app/common/contracts/product';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class GetProductsQueryDto implements GetProductsQueryPayload {
   @IsOptional()
@@ -19,4 +19,15 @@ export class GetProductsQueryDto implements GetProductsQueryPayload {
   @IsString()
   @ApiProperty({ enum: ['asc', 'desc'], required: false })
   sort?: 'asc' | 'desc';
+
+  @IsOptional()
+  @Transform(({ value }) => 
+    typeof value === 'string' 
+      ? value.split(',').map(Number) 
+      : value
+  )
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @ApiProperty({ example: '1,2,3', required: false })
+  productIds?: number[];
 }

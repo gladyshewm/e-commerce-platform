@@ -40,7 +40,7 @@ export class ProductService {
   async getProducts(
     payload: GetProductsQueryPayload,
   ): Promise<ProductWithCategory[]> {
-    const { search, sort, categoryId } = payload; // TODO: limit, offset
+    const { search, sort, categoryId, productIds } = payload; // TODO: limit, offset
     const query = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category');
@@ -62,8 +62,29 @@ export class ProductService {
       query.orderBy('product.createdAt', 'DESC');
     }
 
+    if (productIds && productIds.length) {
+      query.andWhere('product.id IN (:...productIds)', { productIds });
+    }
+
     const products = await query.getMany();
     return products;
+  }
+
+  async getProductById(id: number): Promise<ProductWithCategory> {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['category'],
+    });
+
+    if (!product) {
+      this.logger.error(`Product with id ${id} not found`);
+      throw new RpcException({
+        message: `Product with id ${id} not found`,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
+    }
+
+    return product;
   }
 
   async createProduct(

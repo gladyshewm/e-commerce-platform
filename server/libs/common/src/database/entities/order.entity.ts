@@ -15,7 +15,11 @@ export class OrderEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => Number(v) },
+  })
   totalAmount: number;
 
   @Column({

@@ -66,6 +66,26 @@ export class ProductController {
     );
   }
 
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get product by id' })
+  @ApiResponse({
+    status: 200,
+    type: ProductWithCategoryDto,
+    description: 'Returns a product',
+  })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  @ApiBearerAuth()
+  async getProductById(
+    @Param('id') id: number,
+  ): Promise<ProductWithCategoryDto> {
+    return lastValueFrom<ProductWithCategory>(
+      this.productServiceClient
+        .send('get_product_by_id', { id })
+        .pipe(handleRpcError()),
+    );
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create a new product' })

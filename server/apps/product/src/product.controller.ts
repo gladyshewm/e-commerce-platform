@@ -36,6 +36,16 @@ export class ProductController extends BaseRpcController {
     );
   }
 
+  @MessagePattern('get_product_by_id')
+  async getProductById(
+    @Payload() payload: { id: number },
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.productService.getProductById(payload.id),
+    );
+  }
+
   @MessagePattern('create_product')
   async createProduct(
     @Payload() payload: CreateProductPayload,
