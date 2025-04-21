@@ -40,9 +40,12 @@ export class InventoryController extends BaseRpcController {
   }
 
   @MessagePattern('reserve')
-  async reserve(@Payload() payload: AddStockPayload, @Ctx() ctx: RmqContext) {
+  async reserveOne(
+    @Payload() payload: AddStockPayload,
+    @Ctx() ctx: RmqContext,
+  ) {
     return this.handleMessage(ctx, () =>
-      this.inventoryService.reserve(payload),
+      this.inventoryService.reserveOne(payload),
     );
   }
 
@@ -57,12 +60,12 @@ export class InventoryController extends BaseRpcController {
   }
 
   @MessagePattern('commit_reserve')
-  async commitReserve(
+  async commitReserveOne(
     @Payload() payload: AddStockPayload,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
-      this.inventoryService.commitReserve(payload),
+      this.inventoryService.commitReserveOne(payload),
     );
   }
 
@@ -77,12 +80,12 @@ export class InventoryController extends BaseRpcController {
   }
 
   @MessagePattern('release_reserve')
-  async releaseReserve(
+  async releaseReserveOne(
     @Payload() payload: AddStockPayload,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
-      this.inventoryService.releaseReserve(payload),
+      this.inventoryService.releaseReserveOne(payload),
     );
   }
 
