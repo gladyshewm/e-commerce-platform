@@ -39,5 +39,60 @@ export class InventoryController extends BaseRpcController {
     );
   }
 
-  // TODO: reserve, releaseReserve, commitReserve
+  @MessagePattern('reserve')
+  async reserve(@Payload() payload: AddStockPayload, @Ctx() ctx: RmqContext) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.reserve(payload),
+    );
+  }
+
+  @MessagePattern('reserve_many')
+  async reserveMany(
+    @Payload() payload: AddStockPayload[],
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.reserveMany(payload),
+    );
+  }
+
+  @MessagePattern('commit_reserve')
+  async commitReserve(
+    @Payload() payload: AddStockPayload,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.commitReserve(payload),
+    );
+  }
+
+  @MessagePattern('commit_reserve_many')
+  async commitReserveMany(
+    @Payload() payload: AddStockPayload[],
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.commitReserveMany(payload),
+    );
+  }
+
+  @MessagePattern('release_reserve')
+  async releaseReserve(
+    @Payload() payload: AddStockPayload,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.releaseReserve(payload),
+    );
+  }
+
+  @MessagePattern('release_reserve_many')
+  async releaseReserveMany(
+    @Payload() payload: AddStockPayload[],
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.releaseReserveMany(payload),
+    );
+  }
 }
