@@ -10,17 +10,17 @@ import {
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
 import {
-  LoginPayload,
   LoginResponse,
-  LogoutPayload,
-  RefreshPayload,
-  RegisterPayload,
   RegisterResponse,
   ValidateUserPayload,
 } from '@app/common/contracts/auth';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { USER_SERVICE } from '@app/common/constants';
 import { catchError, lastValueFrom } from 'rxjs';
+import { RegisterDto } from './dto/auth-register.dto';
+import { LoginDto } from './dto/auth-login.dto';
+import { RefreshDto } from './dto/auth-refresh.dto';
+import { LogoutDto } from './dto/auth-logout.dto';
 
 @Controller()
 export class AuthController extends BaseRpcController {
@@ -44,7 +44,7 @@ export class AuthController extends BaseRpcController {
 
   @MessagePattern('register')
   async register(
-    @Payload() payload: RegisterPayload,
+    @Payload() payload: RegisterDto,
     @Ctx() ctx: RmqContext,
   ): Promise<RegisterResponse> {
     return this.handleMessage(ctx, async () => {
@@ -77,7 +77,7 @@ export class AuthController extends BaseRpcController {
 
   @MessagePattern('login')
   async login(
-    @Payload() payload: LoginPayload,
+    @Payload() payload: LoginDto,
     @Ctx() ctx: RmqContext,
   ): Promise<LoginResponse> {
     return this.handleMessage(ctx, () => this.authService.login(payload));
@@ -85,7 +85,7 @@ export class AuthController extends BaseRpcController {
 
   @MessagePattern('refresh')
   async refresh(
-    @Payload() payload: RefreshPayload,
+    @Payload() payload: RefreshDto,
     @Ctx() ctx: RmqContext,
   ): Promise<LoginResponse> {
     return this.handleMessage(ctx, () => this.authService.refresh(payload));
@@ -93,7 +93,7 @@ export class AuthController extends BaseRpcController {
 
   @MessagePattern('logout')
   async logout(
-    @Payload() payload: LogoutPayload,
+    @Payload() payload: LogoutDto,
     @Ctx() ctx: RmqContext,
   ): Promise<{ success: boolean }> {
     await this.handleMessage(ctx, () => this.authService.logout(payload));
@@ -102,7 +102,7 @@ export class AuthController extends BaseRpcController {
 
   @MessagePattern('logout_all')
   async logoutAll(
-    @Payload() payload: LogoutPayload,
+    @Payload() payload: LogoutDto,
     @Ctx() ctx: RmqContext,
   ): Promise<{ success: boolean }> {
     await this.handleMessage(ctx, () => this.authService.logoutAll(payload));

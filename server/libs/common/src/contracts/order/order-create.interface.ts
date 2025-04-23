@@ -4,5 +4,4 @@ export interface CreateOrderPayload {
     productId: number;
     quantity: number;
   }[];
-  totalAmount: number;
 }

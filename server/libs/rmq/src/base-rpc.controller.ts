@@ -13,11 +13,10 @@ export abstract class BaseRpcController {
   ): Promise<T> {
     try {
       const result = await handler();
+      this.rmqService.ack(context);
       return result;
     } catch (err) {
       throw err;
-    } finally {
-      this.rmqService.ack(context);
     }
   }
 }

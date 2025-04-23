@@ -8,14 +8,18 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
-import {
-  Category,
-  CreateCategoryPayload,
-  CreateProductPayload,
-  CreateReviewPayload,
-  DeleteReviewPayload,
-  GetProductsQueryPayload,
-} from '@app/common/contracts/product';
+import { GetProductsQueryDto } from './dto/product/product-get.dto';
+import { GetProductByIdDto } from './dto/product/product-get-by-id.dto';
+import { CreateProductDto } from './dto/product/product-create.dto';
+import { InventoryCreateFailedDto } from './dto/product/inventory-create-failed.dto';
+import { UpdateProductDto } from './dto/product/product-update.dto';
+import { DeleteProductDto } from './dto/product/product-delete.dto';
+import { GetReviewsByProductId } from './dto/review/review-get.dto';
+import { CreateReviewDto } from './dto/review/review-create.dto';
+import { DeleteReviewDto } from './dto/review/review-delete.dto';
+import { CreateCategoryDto } from './dto/category/category-create.dto';
+import { UpdateCategoryDto } from './dto/category/category-update.dto';
+import { DeleteCategoryDto } from './dto/category/category-delete.dto';
 
 @Controller()
 export class ProductController extends BaseRpcController {
@@ -28,7 +32,7 @@ export class ProductController extends BaseRpcController {
 
   @MessagePattern('get_products')
   async getProducts(
-    @Payload() payload: GetProductsQueryPayload,
+    @Payload() payload: GetProductsQueryDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -38,7 +42,7 @@ export class ProductController extends BaseRpcController {
 
   @MessagePattern('get_product_by_id')
   async getProductById(
-    @Payload() payload: { id: number },
+    @Payload() payload: GetProductByIdDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -48,7 +52,7 @@ export class ProductController extends BaseRpcController {
 
   @MessagePattern('create_product')
   async createProduct(
-    @Payload() payload: CreateProductPayload,
+    @Payload() payload: CreateProductDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -58,7 +62,7 @@ export class ProductController extends BaseRpcController {
 
   @EventPattern('inventory_create_failed')
   async inventoryCreateFailedHandler(
-    @Payload() payload: { productId: number },
+    @Payload() payload: InventoryCreateFailedDto,
     @Ctx() ctx: RmqContext,
   ) {
     await this.handleMessage(ctx, () =>
@@ -71,7 +75,7 @@ export class ProductController extends BaseRpcController {
 
   @MessagePattern('update_product')
   async updateProduct(
-    @Payload() payload: Partial<CreateProductPayload> & { id: number },
+    @Payload() payload: UpdateProductDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -80,20 +84,30 @@ export class ProductController extends BaseRpcController {
   }
 
   @MessagePattern('delete_product')
-  async deleteProduct(@Payload('id') id: number, @Ctx() ctx: RmqContext) {
-    return this.handleMessage(ctx, () => this.productService.deleteProduct(id));
+  async deleteProduct(
+    @Payload() payload: DeleteProductDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.productService.deleteProduct(payload.id),
+    );
   }
 
   // REVIEWS
 
   @MessagePattern('get_reviews')
-  async getReviews(@Payload('id') id: number, @Ctx() ctx: RmqContext) {
-    return this.handleMessage(ctx, () => this.productService.getReviews(id));
+  async getReviews(
+    @Payload() payload: GetReviewsByProductId,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.productService.getReviews(payload.productId),
+    );
   }
 
   @MessagePattern('create_review')
   async createReview(
-    @Payload() payload: CreateReviewPayload,
+    @Payload() payload: CreateReviewDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -103,7 +117,7 @@ export class ProductController extends BaseRpcController {
 
   @MessagePattern('delete_review')
   async deleteReview(
-    @Payload() payload: DeleteReviewPayload,
+    @Payload() payload: DeleteReviewDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -120,7 +134,7 @@ export class ProductController extends BaseRpcController {
 
   @MessagePattern('create_category')
   async createCategory(
-    @Payload() payload: CreateCategoryPayload,
+    @Payload() payload: CreateCategoryDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -129,16 +143,22 @@ export class ProductController extends BaseRpcController {
   }
 
   @MessagePattern('update_category')
-  async updateCategory(@Payload() payload: Category, @Ctx() ctx: RmqContext) {
+  async updateCategory(
+    @Payload() payload: UpdateCategoryDto,
+    @Ctx() ctx: RmqContext,
+  ) {
     return this.handleMessage(ctx, () =>
       this.productService.updateCategory(payload),
     );
   }
 
   @MessagePattern('delete_category')
-  async deleteCategory(@Payload('id') id: number, @Ctx() ctx: RmqContext) {
+  async deleteCategory(
+    @Payload() payload: DeleteCategoryDto,
+    @Ctx() ctx: RmqContext,
+  ) {
     return this.handleMessage(ctx, () =>
-      this.productService.deleteCategory(id),
+      this.productService.deleteCategory(payload.id),
     );
   }
 }

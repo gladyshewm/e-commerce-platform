@@ -8,10 +8,8 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
-import {
-  AddStockPayload,
-  ProductCreatedPayload,
-} from '@app/common/contracts/inventory';
+import { ProductCreatedPayload } from '@app/common/contracts/inventory';
+import { AddStockDto } from './dto/inventory-add-stock.dto';
 
 @Controller()
 export class InventoryController extends BaseRpcController {
@@ -33,27 +31,21 @@ export class InventoryController extends BaseRpcController {
   }
 
   @MessagePattern('add_stock')
-  async addStock(@Payload() payload: AddStockPayload, @Ctx() ctx: RmqContext) {
+  async addStock(@Payload() payload: AddStockDto, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () =>
       this.inventoryService.addStock(payload),
     );
   }
 
   @MessagePattern('reserve')
-  async reserveOne(
-    @Payload() payload: AddStockPayload,
-    @Ctx() ctx: RmqContext,
-  ) {
+  async reserveOne(@Payload() payload: AddStockDto, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () =>
       this.inventoryService.reserveOne(payload),
     );
   }
 
   @MessagePattern('reserve_many')
-  async reserveMany(
-    @Payload() payload: AddStockPayload[],
-    @Ctx() ctx: RmqContext,
-  ) {
+  async reserveMany(@Payload() payload: AddStockDto[], @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () =>
       this.inventoryService.reserveMany(payload),
     );
@@ -61,7 +53,7 @@ export class InventoryController extends BaseRpcController {
 
   @MessagePattern('commit_reserve')
   async commitReserveOne(
-    @Payload() payload: AddStockPayload,
+    @Payload() payload: AddStockDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -71,7 +63,7 @@ export class InventoryController extends BaseRpcController {
 
   @MessagePattern('commit_reserve_many')
   async commitReserveMany(
-    @Payload() payload: AddStockPayload[],
+    @Payload() payload: AddStockDto[],
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -81,7 +73,7 @@ export class InventoryController extends BaseRpcController {
 
   @MessagePattern('release_reserve')
   async releaseReserveOne(
-    @Payload() payload: AddStockPayload,
+    @Payload() payload: AddStockDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
@@ -91,7 +83,7 @@ export class InventoryController extends BaseRpcController {
 
   @MessagePattern('release_reserve_many')
   async releaseReserveMany(
-    @Payload() payload: AddStockPayload[],
+    @Payload() payload: AddStockDto[],
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>

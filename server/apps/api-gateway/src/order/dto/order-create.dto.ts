@@ -17,8 +17,4 @@ export class CreateOrderDto implements Omit<CreateOrderPayload, 'userId'> {
   @ValidateNested()
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
-
-  @IsNumber()
-  @IsNotEmpty()
-  totalAmount: number;
 }

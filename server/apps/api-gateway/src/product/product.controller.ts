@@ -170,7 +170,7 @@ export class ProductController {
   async getReviews(@Param('id') id: number): Promise<ReviewDto[]> {
     return lastValueFrom<Review[]>(
       this.productServiceClient
-        .send('get_reviews', { id })
+        .send('get_reviews', { productId: id })
         .pipe(handleRpcError()),
     );
   }

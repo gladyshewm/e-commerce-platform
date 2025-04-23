@@ -7,11 +7,9 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
-import {
-  CreateUserPayload,
-  GetUserByIdPayload,
-  GetUserByNamePayload,
-} from '@app/common/contracts/user';
+import { GetUserByIdDto } from './dto/user-get-by-id.dto';
+import { GetUserByNameDto } from './dto/user-get-by-name.dto';
+import { CreateUserDto } from './dto/user-create.dto';
 
 @Controller()
 export class UserController extends BaseRpcController {
@@ -23,16 +21,13 @@ export class UserController extends BaseRpcController {
   }
 
   @MessagePattern('create_user')
-  async createUser(
-    @Payload() payload: CreateUserPayload,
-    @Ctx() ctx: RmqContext,
-  ) {
+  async createUser(@Payload() payload: CreateUserDto, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () => this.userService.createUser(payload));
   }
 
   @MessagePattern('get_user_by_id')
   async getUserById(
-    @Payload() payload: GetUserByIdPayload,
+    @Payload() payload: GetUserByIdDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () => this.userService.getUserById(payload));
@@ -40,7 +35,7 @@ export class UserController extends BaseRpcController {
 
   @MessagePattern('get_user_by_name')
   async getUserByName(
-    @Payload() payload: GetUserByNamePayload,
+    @Payload() payload: GetUserByNameDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>

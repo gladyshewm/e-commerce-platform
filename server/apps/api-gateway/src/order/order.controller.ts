@@ -31,7 +31,6 @@ export class OrderController {
     @Body() dto: CreateOrderDto,
     @CurrentUser() user: Pick<User, 'id' | 'username'>,
   ) {
-    this.logger.log(`Creating order for user ${user.username}`);
     return lastValueFrom(
       this.orderServiceClient
         .send('create_order', {

@@ -314,6 +314,8 @@ export class ProductService {
     }
 
     const category = this.categoryRepository.create(payload);
+
+    this.logger.log(`Created category with name ${payload.name}`);
     return this.categoryRepository.save(category);
   }
 
@@ -333,6 +335,7 @@ export class ProductService {
     category.name = payload.name;
     if (payload.description) category.description = payload.description;
 
+    this.logger.log(`Updated category with id ${payload.id}`);
     return this.categoryRepository.save(category);
   }
 
@@ -347,6 +350,13 @@ export class ProductService {
       });
     }
 
-    return this.categoryRepository.remove(category);
+    const removed = await this.categoryRepository.remove(category);
+    this.logger.log(`Deleted category with id ${id}`);
+
+    return {
+      id,
+      name: removed.name,
+      description: removed.description,
+    };
   }
 }

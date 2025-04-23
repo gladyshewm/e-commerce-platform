@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { InventoryModule } from './inventory.module';
 import { ConfigService } from '@nestjs/config';
-import { MicroserviceOptions } from '@nestjs/microservices';
+import { MicroserviceOptions, RpcException } from '@nestjs/microservices';
 import { getRmqOptions } from '@app/rmq';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from '@app/logger';
+import { ValidationPipe } from '@nestjs/common';
+import { RmqAckFilter } from '@app/common/filters';
 
 async function bootstrap() {
   const appContext =
@@ -21,6 +23,25 @@ async function bootstrap() {
       logger: WinstonModule.createLogger(winstonConfig),
     },
   );
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      exceptionFactory: (errors) => {
+        const validationErrors = errors.flatMap((err) =>
+          Object.values(err.constraints),
+        );
+        return new RpcException({
+          statusCode: 400,
+          message: 'Validation failed',
+          errors: validationErrors,
+        });
+      },
+    }),
+  );
+  app.useGlobalFilters(new RmqAckFilter());
 
   await app.listen();
 }

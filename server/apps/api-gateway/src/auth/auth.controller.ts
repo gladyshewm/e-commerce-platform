@@ -80,9 +80,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
     const { userAgent, ipAddress } = extractRequestMeta(req);
+    const { id, username } = user;
     const tokens = await lastValueFrom<LoginResponse>(
       this.authServiceClient
-        .send('login', { ...user, userAgent, ipAddress })
+        .send('login', { id, username, userAgent, ipAddress })
         .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, tokens.refreshToken);
