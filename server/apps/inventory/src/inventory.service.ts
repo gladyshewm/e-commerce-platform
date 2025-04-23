@@ -24,14 +24,35 @@ export class InventoryService {
 
   async createInventory(payload: ProductCreatedPayload) {
     try {
-      const inventory = this.inventoryRepository.create({
+      const exists = await this.inventoryRepository.findOneBy({
         product: { id: payload.productId },
       });
 
+      if (exists) {
+        this.logger.error(
+          `Inventory for product with id ${payload.productId} already exists`,
+        );
+        throw new RpcException({
+          message: `Inventory for product with id ${payload.productId} already exists`,
+          statusCode: HttpStatus.CONFLICT,
+        });
+      }
+
+      const inventory = this.inventoryRepository.create({
+        product: { id: payload.productId },
+      });
       await this.inventoryRepository.save(inventory);
+
       this.logger.log(
         `Created inventory for product with id ${payload.productId}`,
       );
+
+      this.productServiceClient
+        .emit('inventory_created', {
+          productId: payload.productId,
+          inventoryId: inventory.id,
+        })
+        .subscribe();
     } catch (error) {
       this.logger.error(
         `Failed to create inventory: ${error.message}`,

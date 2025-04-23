@@ -6,3 +6,5 @@ export * from './category-create.interface';
 export * from './review.interface';
 export * from './review-create.interface';
 export * from './review-delete.interface';
+export * from './product-inventory-created.interface';
+export * from './product-inventory-create-failed.interface';

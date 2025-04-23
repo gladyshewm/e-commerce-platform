@@ -20,6 +20,7 @@ import { DeleteReviewDto } from './dto/review/review-delete.dto';
 import { CreateCategoryDto } from './dto/category/category-create.dto';
 import { UpdateCategoryDto } from './dto/category/category-update.dto';
 import { DeleteCategoryDto } from './dto/category/category-delete.dto';
+import { InventoryCreatedDto } from './dto/product/inventory-created.dto';
 
 @Controller()
 export class ProductController extends BaseRpcController {
@@ -57,6 +58,16 @@ export class ProductController extends BaseRpcController {
   ) {
     return this.handleMessage(ctx, () =>
       this.productService.createProduct(payload),
+    );
+  }
+
+  @EventPattern('inventory_created')
+  async inventoryCreatedHandler(
+    @Payload() payload: InventoryCreatedDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    await this.handleMessage(ctx, () =>
+      this.productService.updateInventoryForProduct(payload),
     );
   }
 

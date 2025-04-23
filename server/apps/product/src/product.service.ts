@@ -6,10 +6,10 @@ import {
   CreateReviewPayload,
   DeleteReviewPayload,
   GetProductsQueryPayload,
+  InventoryCreatedPayload,
   ProductWithCategory,
   Review,
 } from '@app/common/contracts/product';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
   CategoryEntity,
   ProductEntity,
@@ -20,6 +20,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { INVENTORY_SERVICE, USER_SERVICE } from '@app/common/constants';
 import { catchError, lastValueFrom } from 'rxjs';
 import { UserWithoutPassword } from '@app/common/contracts/user';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class ProductService {
@@ -90,41 +91,78 @@ export class ProductService {
   async createProduct(
     payload: CreateProductPayload,
   ): Promise<ProductWithCategory> {
-    const existingProduct = await this.productRepository.findOneBy({
-      name: payload.name,
+    try {
+      const existingProduct = await this.productRepository.findOneBy({
+        name: payload.name,
+      });
+
+      if (existingProduct) {
+        throw new RpcException({
+          message: `Product with name ${payload.name} already exists`,
+          statusCode: HttpStatus.CONFLICT,
+        });
+      }
+
+      const product = this.productRepository.create({
+        name: payload.name,
+        description: payload.description,
+        price: payload.price,
+        sku: payload.sku,
+        category: payload.categoryId && { id: payload.categoryId },
+      });
+
+      const saved = await this.productRepository.save(product);
+
+      this.inventoryServiceClient
+        .emit('product_created', {
+          productId: saved.id,
+        })
+        .subscribe();
+
+      this.logger.log(`Created product with id ${saved.id}`);
+      if (!payload.categoryId) return saved;
+
+      const category = await this.categoryRepository.findOneBy({
+        id: saved.category.id,
+      });
+
+      return { ...saved, category };
+    } catch (error) {
+      this.logger.error(
+        `Failed to create product: ${error.message}`,
+        error.stack,
+      );
+      throw new RpcException({
+        message: `Failed to create product: ${error.message}`,
+        statusCode: error.error?.statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
+  }
+
+  async updateInventoryForProduct(payload: InventoryCreatedPayload) {
+    const { productId, inventoryId } = payload;
+
+    const product = await this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['inventory'],
     });
 
-    if (existingProduct) {
-      this.logger.error(`Product with name ${payload.name} already exists`);
+    if (!product) {
+      this.logger.error(
+        `Failed to update product.inventory: Product with id ${productId} not found`,
+      );
       throw new RpcException({
-        message: `Product with name ${payload.name} already exists`,
-        statusCode: HttpStatus.CONFLICT,
+        message: `Product with id ${productId} not found`,
+        statusCode: HttpStatus.NOT_FOUND,
       });
     }
 
-    const product = this.productRepository.create({
-      name: payload.name,
-      description: payload.description,
-      price: payload.price,
-      sku: payload.sku,
-      category: payload.categoryId && { id: payload.categoryId },
+    await this.productRepository.update(productId, {
+      inventory: { id: inventoryId },
     });
-
-    const saved = await this.productRepository.save(product);
-
-    this.inventoryServiceClient
-      .emit('product_created', {
-        productId: saved.id,
-      })
-      .subscribe();
-
-    if (!payload.categoryId) return saved;
-
-    const category = await this.categoryRepository.findOneBy({
-      id: saved.category.id,
-    });
-
-    return { ...saved, category };
+    this.logger.log(
+      `Updated product.inventory for product with id ${productId}`,
+    );
   }
 
   async updateProduct(payload: Partial<CreateProductPayload> & { id: number }) {
@@ -171,6 +209,7 @@ export class ProductService {
       product.category = category;
     }
 
+    this.logger.log(`Updated product with id ${payload.id}`);
     return this.productRepository.save(product);
   }
 
@@ -188,6 +227,7 @@ export class ProductService {
       });
     }
 
+    this.logger.log(`Deleted product with id ${id}`);
     return this.productRepository.remove(product);
   }
 
@@ -250,6 +290,7 @@ export class ProductService {
     });
     const saved = await this.reviewRepository.save(review);
 
+    this.logger.log(`Created review with id ${saved.id}`);
     return {
       id: saved.id,
       rating: saved.rating,
@@ -282,6 +323,8 @@ export class ProductService {
     }
 
     const removed = await this.reviewRepository.remove(review);
+
+    this.logger.log(`Deleted review with id ${removed.id}`);
     return {
       id: removed.id,
       rating: removed.rating,

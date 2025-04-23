@@ -8,8 +8,8 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
-import { ProductCreatedPayload } from '@app/common/contracts/inventory';
 import { AddStockDto } from './dto/inventory-add-stock.dto';
+import { CreateInventoryDto } from './dto/inventory-create.dto';
 
 @Controller()
 export class InventoryController extends BaseRpcController {
@@ -22,10 +22,10 @@ export class InventoryController extends BaseRpcController {
 
   @EventPattern('product_created')
   async handleProductCreated(
-    @Payload() payload: ProductCreatedPayload,
+    @Payload() payload: CreateInventoryDto,
     @Ctx() ctx: RmqContext,
   ) {
-    this.handleMessage(ctx, () =>
+    await this.handleMessage(ctx, () =>
       this.inventoryService.createInventory(payload),
     );
   }
