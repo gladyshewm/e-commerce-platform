@@ -49,7 +49,7 @@ export class ProductEntity {
   @OneToMany(() => ReviewEntity, (review) => review.product)
   reviews: ReviewEntity[];
 
-  @OneToOne(() => InventoryEntity)
+  @OneToOne(() => InventoryEntity, { cascade: true, onDelete: 'CASCADE' })
   @JoinColumn()
   inventory: InventoryEntity;
 }

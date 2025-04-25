@@ -22,7 +22,7 @@ export class InventoryEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => ProductEntity)
+  @OneToOne(() => ProductEntity, { cascade: false, onDelete: 'CASCADE' })
   @JoinColumn()
   product: ProductEntity;
 }
