@@ -17,9 +17,7 @@ export function handleRpcError(): OperatorFunction<any, any> {
             statusCode: HttpStatus.BAD_REQUEST,
           }),
       );
-    }
-
-    if (error?.statusCode && error?.message) {
+    } else if (error?.statusCode && error?.message) {
       return throwError(
         () => new HttpException(error.message, error.statusCode),
       );

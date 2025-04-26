@@ -1,5 +1,4 @@
 import { Controller } from '@nestjs/common';
-import { OrderService } from './order.service';
 import {
   Ctx,
   MessagePattern,
@@ -7,24 +6,25 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
-import { CreateOrderPayload } from '@app/common/contracts/order';
+import { OrderOrchestrator } from './saga/order.orchestrator';
+import { CreateOrderDto } from './dto/order-create.dto';
 
 @Controller()
 export class OrderController extends BaseRpcController {
   constructor(
     rmqService: RmqService,
-    private readonly orderService: OrderService,
+    private readonly orderOrchestrator: OrderOrchestrator,
   ) {
     super(rmqService);
   }
 
   @MessagePattern('create_order')
   async createOrder(
-    @Payload() payload: CreateOrderPayload,
+    @Payload() payload: CreateOrderDto,
     @Ctx() ctx: RmqContext,
   ) {
     return this.handleMessage(ctx, () =>
-      this.orderService.createOrder(payload),
+      this.orderOrchestrator.createOrder(payload),
     );
   }
 }
