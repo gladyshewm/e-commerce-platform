@@ -165,7 +165,9 @@ export class ProductService {
     );
   }
 
-  async updateProduct(payload: Partial<CreateProductPayload> & { id: number }) {
+  async updateProduct(
+    payload: Partial<CreateProductPayload> & { id: number },
+  ): Promise<ProductWithCategory> {
     const product = await this.productRepository.findOne({
       where: { id: payload.id },
       relations: ['category'],
@@ -209,8 +211,10 @@ export class ProductService {
       product.category = category;
     }
 
+    const saved = await this.productRepository.save(product);
     this.logger.log(`Updated product with id ${payload.id}`);
-    return this.productRepository.save(product);
+
+    return saved;
   }
 
   async deleteProduct(id: number): Promise<ProductWithCategory> {
