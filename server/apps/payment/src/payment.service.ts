@@ -108,9 +108,7 @@ export class PaymentService {
     }
 
     transaction.status = PaymentStatus.REFUNDED;
-
     const saved = await this.paymentRepository.save(transaction);
-
     this.logger.log(`Payment for orderId ${payload.orderId} refunded`);
 
     return {
