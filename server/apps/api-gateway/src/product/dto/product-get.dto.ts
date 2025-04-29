@@ -21,10 +21,8 @@ export class GetProductsQueryDto implements GetProductsQueryPayload {
   sort?: 'asc' | 'desc';
 
   @IsOptional()
-  @Transform(({ value }) => 
-    typeof value === 'string' 
-      ? value.split(',').map(Number) 
-      : value
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',').map(Number) : value,
   )
   @IsArray()
   @IsNumber({}, { each: true })
