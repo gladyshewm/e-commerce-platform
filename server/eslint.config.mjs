@@ -38,8 +38,8 @@ export default defineConfig([
       sourceType: 'module',
 
       parserOptions: {
-        project: 'tsconfig.json',
-        tsconfigRootDir: 'D:\\js_projects\\e-commerce-platform\\server',
+        project: './tsconfig.json',
+        tsconfigRootDir: __dirname,
       },
     },
 
