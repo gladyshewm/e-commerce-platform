@@ -29,9 +29,6 @@ export class InventoryService {
       });
 
       if (exists) {
-        this.logger.error(
-          `Inventory for product with id ${payload.productId} already exists`,
-        );
         throw new RpcException({
           message: `Inventory for product with id ${payload.productId} already exists`,
           statusCode: HttpStatus.CONFLICT,
