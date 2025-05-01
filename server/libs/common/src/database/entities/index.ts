@@ -7,3 +7,4 @@ export * from './category.entity';
 export * from './review.entity';
 export * from './inventory.entity';
 export * from './payment.entity';
+export * from './delivery.entity';

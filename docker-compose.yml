@@ -136,6 +136,25 @@ services:
           action: sync
     depends_on:
       - postgres
+  
+  delivery:
+    build:
+      context: ./server
+      dockerfile: apps/delivery/Dockerfile
+    env_file:
+      - ./server/apps/delivery/.env
+    networks:
+      - default
+    develop:
+      watch:
+        - path: ./server/apps/delivery
+          target: /usr/src/app/apps/delivery
+          action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
+          action: sync
+    depends_on:
+      - postgres
 
   rmq:
     image: rabbitmq:4-management-alpine

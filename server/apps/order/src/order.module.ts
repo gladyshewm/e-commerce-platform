@@ -16,6 +16,7 @@ import {
 import { PlaceOrderStep } from './saga/create-order/steps/place-order.step';
 import { OrderOrchestrator } from './saga/order.orchestrator';
 import {
+  DELIVERY_SERVICE,
   INVENTORY_SERVICE,
   PAYMENT_SERVICE,
   PRODUCT_SERVICE,
@@ -36,6 +37,7 @@ import { CreateOrderSagaFactory } from './saga/create-order/create-order-saga.fa
         RMQ_PRODUCT_QUEUE: Joi.string().required(),
         RMQ_INVENTORY_QUEUE: Joi.string().required(),
         RMQ_PAYMENT_QUEUE: Joi.string().required(),
+        RMQ_DELIVERY_QUEUE: Joi.string().required(),
         POSTGRES_HOST: Joi.string().required(),
         POSTGRES_PORT: Joi.number().required(),
         POSTGRES_USER: Joi.string().required(),
@@ -49,6 +51,7 @@ import { CreateOrderSagaFactory } from './saga/create-order/create-order-saga.fa
     RmqModule.register({ name: PRODUCT_SERVICE }),
     RmqModule.register({ name: INVENTORY_SERVICE }),
     RmqModule.register({ name: PAYMENT_SERVICE }),
+    RmqModule.register({ name: DELIVERY_SERVICE }),
   ],
   controllers: [OrderController],
   providers: [
