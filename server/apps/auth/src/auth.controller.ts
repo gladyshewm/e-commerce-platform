@@ -13,6 +13,7 @@ import {
   LoginResponse,
   RegisterResponse,
   ValidateUserPayload,
+  ValidateUserResponse,
 } from '@app/common/contracts/auth';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { USER_SERVICE } from '@app/common/constants';
@@ -36,7 +37,7 @@ export class AuthController extends BaseRpcController {
   async validateUser(
     @Payload() payload: ValidateUserPayload,
     @Ctx() ctx: RmqContext,
-  ) {
+  ): Promise<ValidateUserResponse> {
     return this.handleMessage(ctx, () =>
       this.authService.validateUser(payload),
     );
