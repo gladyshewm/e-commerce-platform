@@ -120,9 +120,10 @@ export class TokenService {
 
   async removeRefreshToken(refreshToken: string) {
     const token = await this.findToken(refreshToken);
+
     if (!token) {
       this.logger.warn(`Failed to remove refresh token: Token not found`);
-      return null;
+      return;
     }
 
     await this.tokenRepository.delete({ id: token.id });

@@ -86,9 +86,11 @@ export class AuthService {
     const tokenRecord = await this.tokenService.findToken(refreshToken);
 
     if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
-      this.logger.error(`Failed to refresh tokens: Refresh token is invalid`);
+      this.logger.error(
+        `Failed to refresh tokens: Refresh token ${!tokenRecord ? 'not found' : 'expired'}`,
+      );
       throw new RpcException({
-        message: 'Refresh token is invalid or expired',
+        message: `Refresh token ${!tokenRecord ? 'not found' : 'expired'}`,
         statusCode: HttpStatus.UNAUTHORIZED,
       });
     }
