@@ -15,6 +15,7 @@ import {
 } from '@app/common/contracts/auth';
 import { User } from '@app/common/contracts/user';
 import { TokenEntity, UserEntity } from '@app/common/database/entities';
+import { JwtPayload } from './types/jwt-payload.interface';
 
 jest.mock('./token.service');
 jest.mock('bcrypt');
@@ -153,7 +154,7 @@ describe('AuthService', () => {
     };
 
     beforeEach(async () => {
-      tokenService.verifyRefreshToken.mockResolvedValue({});
+      tokenService.verifyRefreshToken.mockResolvedValue({} as JwtPayload);
       tokenService.findToken.mockResolvedValue(tokenRecord);
       tokenService.getTokens.mockResolvedValue(tokens);
       result = await authService.refresh(payload);
@@ -220,7 +221,7 @@ describe('AuthService', () => {
     };
 
     beforeEach(async () => {
-      tokenService.verifyRefreshToken.mockResolvedValue({});
+      tokenService.verifyRefreshToken.mockResolvedValue({} as JwtPayload);
       await authService.logout(payload);
     });
 
@@ -248,7 +249,7 @@ describe('AuthService', () => {
     };
 
     beforeEach(async () => {
-      tokenService.verifyRefreshToken.mockResolvedValue({});
+      tokenService.verifyRefreshToken.mockResolvedValue({} as JwtPayload);
       await authService.logoutAll(payload);
     });
 

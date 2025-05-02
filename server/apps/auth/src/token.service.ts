@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { TokenEntity } from '@app/common/database/entities';
 import { LessThan, Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { JwtPayload } from './types/jwt-payload.interface';
 
 @Injectable()
 export class TokenService {
@@ -20,11 +21,18 @@ export class TokenService {
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_6AM)
-  async cleanExpiredTokens() {
-    await this.tokenRepository.delete({
-      expiresAt: LessThan(new Date()),
-    });
-    this.logger.log('Deleted expired tokens');
+  async cleanExpiredTokens(): Promise<void> {
+    try {
+      await this.tokenRepository.delete({
+        expiresAt: LessThan(new Date()),
+      });
+      this.logger.log('Deleted expired tokens');
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete expired tokens: ${error.message}`,
+        error.stack,
+      );
+    }
   }
 
   async getTokens(userId: number, username: string): Promise<LoginResponse> {
@@ -48,9 +56,9 @@ export class TokenService {
     return { accessToken, refreshToken };
   }
 
-  async verifyAccessToken(token: string) {
+  async verifyAccessToken(token: string): Promise<JwtPayload | null> {
     try {
-      const userData = await this.jwtService.verifyAsync(token, {
+      const userData = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
       });
       return userData;
@@ -63,9 +71,9 @@ export class TokenService {
     }
   }
 
-  async verifyRefreshToken(token: string) {
+  async verifyRefreshToken(token: string): Promise<JwtPayload | null> {
     try {
-      const userData = await this.jwtService.verifyAsync(token, {
+      const userData = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
       return userData;
@@ -78,11 +86,13 @@ export class TokenService {
     }
   }
 
-  async findToken(refreshToken: string) {
-    const payload = this.jwtService.decode(refreshToken) as { userId: number };
+  async findToken(refreshToken: string): Promise<TokenEntity | null> {
+    const payload = this.jwtService.decode<JwtPayload>(refreshToken);
 
     if (!payload || !payload.userId) {
-      this.logger.warn(`Failed to find token: User ID not found in token`);
+      this.logger.error(
+        `Failed to find token: ${!payload ? 'Invalid token' : 'User ID not found in token'}`,
+      );
       return null;
     }
 
@@ -98,49 +108,73 @@ export class TokenService {
       }
     }
 
-    this.logger.warn(`Failed to find token: Token not found`);
+    this.logger.error(`Failed to find token: Token not found`);
     return null;
   }
 
-  async updateRefreshToken(payload: RefreshPayload & { userId: number }) {
-    const { userId, refreshToken, ipAddress, userAgent } = payload;
-    const hashed = await bcrypt.hash(refreshToken, 10);
+  async updateRefreshToken(
+    payload: RefreshPayload & { userId: number },
+  ): Promise<void> {
+    try {
+      const { userId, refreshToken, ipAddress, userAgent } = payload;
+      const hashed = await bcrypt.hash(refreshToken, 10);
 
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days FIXME:
-    const token = this.tokenRepository.create({
-      user: { id: userId },
-      refreshToken: hashed,
-      expiresAt,
-      ipAddress,
-      userAgent,
-    });
+      const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days FIXME:
+      const token = this.tokenRepository.create({
+        user: { id: userId },
+        refreshToken: hashed,
+        expiresAt,
+        ipAddress,
+        userAgent,
+      });
 
-    await this.tokenRepository.save(token);
+      await this.tokenRepository.save(token);
+      this.logger.log(`Updated refresh token for user with ID ${userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to update refresh token: ${error.message}`,
+        error.stack,
+      );
+    }
   }
 
-  async removeRefreshToken(refreshToken: string) {
+  async removeRefreshToken(refreshToken: string): Promise<void> {
     const token = await this.findToken(refreshToken);
 
     if (!token) {
-      this.logger.warn(`Failed to remove refresh token: Token not found`);
+      this.logger.error(`Failed to remove refresh token: Token not found`);
       return;
     }
 
     await this.tokenRepository.delete({ id: token.id });
+    this.logger.log(`Removed refresh token for user with ID ${token.user.id}`);
   }
 
-  async removeRefreshTokenById(refreshTokenId: number) {
-    await this.tokenRepository.delete({ id: refreshTokenId });
+  async removeRefreshTokenById(refreshTokenId: number): Promise<void> {
+    try {
+      await this.tokenRepository.delete({ id: refreshTokenId });
+      this.logger.log(`Removed refresh token with ID ${refreshTokenId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove refresh token with ID ${refreshTokenId}: ${error.message}`,
+        error.stack,
+      );
+    }
   }
 
-  async removeAllRefreshTokens(refreshToken: string) {
-    const payload = this.jwtService.decode(refreshToken) as { userId: string };
+  async removeAllRefreshTokens(refreshToken: string): Promise<void> {
+    const payload = this.jwtService.decode<JwtPayload>(refreshToken);
 
     if (!payload || !payload.userId) {
-      this.logger.warn(`Failed to find token: User ID not found in token`);
-      return null;
+      this.logger.error(
+        `Failed to remove all refresh tokens: ${!payload ? 'Invalid token' : 'User ID not found in token'}`,
+      );
+      return;
     }
 
-    await this.tokenRepository.delete({ user: { id: +payload.userId } });
+    await this.tokenRepository.delete({ user: { id: payload.userId } });
+    this.logger.log(
+      `Removed all refresh tokens for user with ID ${payload.userId}`,
+    );
   }
 }
