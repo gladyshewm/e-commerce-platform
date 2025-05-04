@@ -1,6 +1,6 @@
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { COMMIT_RESERVE_STEP } from '../constants';
-import { OrderSagaContext } from '../../order-saga-ctx.interface';
+import { OrderSagaContext } from '../../types/order-saga-ctx.interface';
 import { SagaStep } from './saga-step';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AddStockPayload } from '@app/common/contracts/inventory';

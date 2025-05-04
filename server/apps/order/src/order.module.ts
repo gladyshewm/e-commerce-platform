@@ -18,6 +18,7 @@ import { OrderOrchestrator } from './saga/order.orchestrator';
 import {
   DELIVERY_SERVICE,
   INVENTORY_SERVICE,
+  NOTIFICATION_SERVICE,
   PAYMENT_SERVICE,
   PRODUCT_SERVICE,
 } from '@app/common/constants';
@@ -36,6 +37,7 @@ import { CreateOrderSagaFactory } from './saga/create-order/create-order-saga.fa
         RMQ_ORDER_QUEUE: Joi.string().required(),
         RMQ_PRODUCT_QUEUE: Joi.string().required(),
         RMQ_INVENTORY_QUEUE: Joi.string().required(),
+        RMQ_NOTIFICATION_QUEUE: Joi.string().required(),
         RMQ_PAYMENT_QUEUE: Joi.string().required(),
         RMQ_DELIVERY_QUEUE: Joi.string().required(),
         POSTGRES_HOST: Joi.string().required(),
@@ -52,6 +54,7 @@ import { CreateOrderSagaFactory } from './saga/create-order/create-order-saga.fa
     RmqModule.register({ name: INVENTORY_SERVICE }),
     RmqModule.register({ name: PAYMENT_SERVICE }),
     RmqModule.register({ name: DELIVERY_SERVICE }),
+    RmqModule.register({ name: NOTIFICATION_SERVICE }),
   ],
   controllers: [OrderController],
   providers: [

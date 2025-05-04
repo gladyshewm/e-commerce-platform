@@ -2,7 +2,7 @@ import { SagaStep } from './saga-step';
 import { PLACE_ORDER_STEP } from '../constants';
 import { OrderService } from '../../../order.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { OrderSagaContext } from '../../order-saga-ctx.interface';
+import { OrderSagaContext } from '../../types/order-saga-ctx.interface';
 
 @Injectable()
 export class PlaceOrderStep extends SagaStep<OrderSagaContext> {

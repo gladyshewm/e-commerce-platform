@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { RESERVE_ITEMS_STEP } from '../constants';
-import { OrderSagaContext } from '../../order-saga-ctx.interface';
+import { OrderSagaContext } from '../../types/order-saga-ctx.interface';
 import { SagaStep } from './saga-step';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError, lastValueFrom } from 'rxjs';

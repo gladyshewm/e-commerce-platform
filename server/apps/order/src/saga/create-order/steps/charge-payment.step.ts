@@ -1,6 +1,6 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { CHARGE_PAYMENT_STEP } from '../constants';
-import { OrderSagaContext } from '../../order-saga-ctx.interface';
+import { OrderSagaContext } from '../../types/order-saga-ctx.interface';
 import { SagaStep } from './saga-step';
 import {
   ChargePaymentPayload,
@@ -29,7 +29,7 @@ export class ChargePaymentStep extends SagaStep<OrderSagaContext> {
     this.logger.log(`Charging payment for order with ID ${context.order.id}`);
     const payload: ChargePaymentPayload = {
       orderId: context.order.id,
-      userId: context.userId,
+      userId: context.order.userId,
       amount: context.order.totalAmount,
       currency: 'RUB',
     };
