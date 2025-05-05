@@ -7,6 +7,7 @@ import { RmqModule } from '@app/rmq';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeliveryEntity } from '@app/common/database/entities';
+import { NOTIFICATION_SERVICE } from '@app/common/constants';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DeliveryEntity } from '@app/common/database/entities';
     TypeOrmConfigModule,
     TypeOrmModule.forFeature([DeliveryEntity]),
     RmqModule,
+    RmqModule.register({ name: NOTIFICATION_SERVICE }),
   ],
   controllers: [DeliveryController],
   providers: [Logger, DeliveryService],

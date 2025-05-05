@@ -1,7 +1,7 @@
-import { OrderCreatedPayload } from '@app/common/contracts/delivery';
+import { OrderCreatedPayload } from '@app/common/contracts/notification';
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class ScheduleDeliveryDto implements OrderCreatedPayload {
+export class NotifyUserDto implements OrderCreatedPayload {
   @IsNumber()
   @IsNotEmpty()
   userId: number;

@@ -8,3 +8,4 @@ export * from './review.entity';
 export * from './inventory.entity';
 export * from './payment.entity';
 export * from './delivery.entity';
+export * from './notification.entity';

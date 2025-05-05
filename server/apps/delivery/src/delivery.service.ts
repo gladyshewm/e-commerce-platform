@@ -1,10 +1,11 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { Delivery, OrderCreatedPayload } from '@app/common/contracts/delivery';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeliveryEntity } from '@app/common/database/entities';
 import { Repository } from 'typeorm';
+import { Delivery, OrderCreatedPayload } from '@app/common/contracts/delivery';
+import { DeliveryEntity } from '@app/common/database/entities';
 import { DeliveryStatus } from '@app/common/database/enums';
-import { RpcException } from '@nestjs/microservices';
+import { NOTIFICATION_SERVICE } from '@app/common/constants';
 
 @Injectable()
 export class DeliveryService {
@@ -13,6 +14,8 @@ export class DeliveryService {
   constructor(
     @InjectRepository(DeliveryEntity)
     private readonly deliveryRepository: Repository<DeliveryEntity>,
+    @Inject(NOTIFICATION_SERVICE)
+    private readonly notificationServiceClient: ClientProxy,
   ) {}
 
   async scheduleDelivery(payload: OrderCreatedPayload): Promise<void> {
@@ -37,24 +40,37 @@ export class DeliveryService {
 
     this.logger.log(`Delivery scheduled for order with ID ${payload.orderId}`);
 
-    // TODO: notify emit delivery_scheduled
+    this.notificationServiceClient
+      .emit('delivery_scheduled', {
+        userId: payload.userId,
+        orderId: payload.orderId,
+      })
+      .subscribe();
 
     // FIXME: fake delay
-    setTimeout(() => this.startDelivery(payload.orderId), 5_000);
+    setTimeout(
+      () => this.startDelivery(payload.userId, payload.orderId),
+      5_000,
+    );
   }
 
-  async startDelivery(orderId: number) {
+  async startDelivery(userId: number, orderId: number) {
     await this.updateDeliveryStatus(orderId, DeliveryStatus.IN_TRANSIT);
 
     this.logger.log(`Delivery for order with ID ${orderId} started`);
 
-    // TODO: notify emit delivery_started
+    this.notificationServiceClient
+      .emit('delivery_started', {
+        userId: userId,
+        orderId: orderId,
+      })
+      .subscribe();
 
     //FIXME: fake delay
-    setTimeout(() => this.completeDelivery(orderId), 5_000);
+    setTimeout(() => this.completeDelivery(userId, orderId), 5_000);
   }
 
-  async completeDelivery(orderId: number) {
+  async completeDelivery(userId: number, orderId: number) {
     const delivery = await this.deliveryRepository.findOne({
       where: { order: { id: orderId } },
     });
@@ -85,7 +101,12 @@ export class DeliveryService {
 
     this.logger.log(`Delivery for order with ID ${orderId} completed`);
 
-    // TODO: notify emit delivery_completed
+    this.notificationServiceClient
+      .emit('delivery_completed', {
+        userId: userId,
+        orderId: orderId,
+      })
+      .subscribe();
   }
 
   async updateDeliveryStatus(

@@ -39,7 +39,7 @@ describe('DeliveryController', () => {
   });
 
   describe('handleOrderCreated', () => {
-    const payload: ScheduleDeliveryDto = { orderId: 55 };
+    const payload: ScheduleDeliveryDto = { userId: 1, orderId: 55 };
 
     beforeEach(async () => {
       await deliveryController.handleOrderCreated(payload, ctx);

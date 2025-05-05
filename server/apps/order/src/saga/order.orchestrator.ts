@@ -33,6 +33,7 @@ export class OrderOrchestrator {
 
       this.deliveryServiceClient
         .emit('order_created', {
+          userId: order.userId,
           orderId: order.id,
         })
         .subscribe();

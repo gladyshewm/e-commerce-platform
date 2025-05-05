@@ -40,7 +40,10 @@ services:
           target: /usr/src/app/libs
           action: sync
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
 
   user:
     build:
@@ -59,7 +62,10 @@ services:
           target: /usr/src/app/libs
           action: sync
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
 
   product:
     build:
@@ -78,7 +84,10 @@ services:
           target: /usr/src/app/libs
           action: sync
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
   
   inventory:
     build:
@@ -97,7 +106,10 @@ services:
           target: /usr/src/app/libs
           action: sync
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
   
   order:
     build:
@@ -116,7 +128,10 @@ services:
           target: /usr/src/app/libs
           action: sync
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
   
   payment:
     build:
@@ -135,7 +150,10 @@ services:
           target: /usr/src/app/libs
           action: sync
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
   
   delivery:
     build:
@@ -154,10 +172,37 @@ services:
           target: /usr/src/app/libs
           action: sync
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
+  
+  notification:
+    build:
+      context: ./server
+      dockerfile: apps/notification/Dockerfile
+    env_file:
+      - ./server/apps/notification/.env
+    networks:
+      - default
+    develop:
+      watch:
+        - path: ./server/apps/notification
+          target: /usr/src/app/apps/notification
+          action: sync
+        - path: ./server/libs
+          target: /usr/src/app/libs
+          action: sync
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rmq:
+        condition: service_healthy
+      
 
   rmq:
     image: rabbitmq:4-management-alpine
+    restart: always
     env_file: .env
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
@@ -168,6 +213,11 @@ services:
     networks:
       - default
       - rmq_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:alpine
@@ -183,6 +233,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:alpine
