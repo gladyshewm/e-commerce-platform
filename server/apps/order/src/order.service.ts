@@ -122,6 +122,17 @@ export class OrderService {
       });
     }
 
+    if (order.status === OrderStatus.CANCELLED) {
+      this.logger.warn(`Order with id ${orderId} already cancelled`);
+      return {
+        id: order.id,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        createdAt: order.createdAt,
+        userId: order.user.id,
+      };
+    }
+
     order.status = OrderStatus.CANCELLED;
     const saved = await this.orderRepository.save(order);
 
