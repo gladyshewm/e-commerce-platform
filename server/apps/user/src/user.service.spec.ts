@@ -7,10 +7,12 @@ import {
   CreateUserPayload,
   GetUserByIdPayload,
   GetUserByNamePayload,
+  UpdateUserRolePayload,
   User,
   UserWithoutPassword,
 } from '@app/common/contracts/user';
 import { RpcException } from '@nestjs/microservices';
+import { UserRole } from '@app/common/database/enums';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('hashedPassword'),
@@ -160,6 +162,61 @@ describe('UserService', () => {
         username: user.username,
         email: user.email,
         password: user.password,
+      });
+    });
+  });
+
+  describe('updateUserRole', () => {
+    let result: UserWithoutPassword;
+    const payload: UpdateUserRolePayload = {
+      userId: 222,
+      role: UserRole.MANAGER,
+    };
+    const user = {
+      id: 1,
+      username: 'uss',
+      email: 'email',
+      role: UserRole.CUSTOMER,
+    } as UserEntity;
+
+    it('should throw RpcException when user not found', async () => {
+      userRepository.findOne.mockResolvedValueOnce(null);
+      await expect(userService.updateUserRole(payload)).rejects.toThrow(
+        RpcException,
+      );
+    });
+
+    it('should return user if he already has this status', async () => {
+      userRepository.findOne.mockResolvedValueOnce({
+        ...user,
+        role: payload.role,
+      });
+      result = await userService.updateUserRole(payload);
+
+      expect(result).toEqual({
+        ...user,
+        role: payload.role,
+      });
+      expect(userRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should save user with updated role', async () => {
+      userRepository.findOne.mockResolvedValueOnce(user);
+      result = await userService.updateUserRole(payload);
+
+      expect(userRepository.save).toHaveBeenCalledWith({
+        ...user,
+        role: payload.role,
+      });
+    });
+
+    it('should return updated user', async () => {
+      userRepository.findOne.mockResolvedValueOnce(user);
+      result = await userService.updateUserRole(payload);
+
+      expect(result).toEqual({
+        ...user,
+        role: payload.role,
       });
     });
   });

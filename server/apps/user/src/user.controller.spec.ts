@@ -7,6 +7,8 @@ import { CreateUserDto } from './dto/user-create.dto';
 import { RmqContext, RpcException } from '@nestjs/microservices';
 import { GetUserByIdDto } from './dto/user-get-by-id.dto';
 import { GetUserByNameDto } from './dto/user-get-by-name.dto';
+import { UpdateUserRoleDto } from './dto/user-update-role.dto';
+import { UserRole } from '@app/common/database/enums';
 
 jest.mock('./user.service');
 
@@ -138,6 +140,44 @@ describe('UserController', () => {
         new RpcException('User not found'),
       );
       await expect(userController.getUserByName(payload, ctx)).rejects.toThrow(
+        RpcException,
+      );
+    });
+
+    it('should call ack', () => {
+      expect(rmqService.ack).toHaveBeenCalledTimes(1);
+      expect(rmqService.ack).toHaveBeenCalledWith(ctx);
+    });
+  });
+
+  describe('updateUserRole', () => {
+    let result: UserWithoutPassword;
+    const payload: UpdateUserRoleDto = { userId: 123, role: UserRole.CUSTOMER };
+    const user = {
+      id: 1,
+      username: 'test_user',
+      email: 'email',
+      role: UserRole.CUSTOMER,
+    } as UserWithoutPassword;
+
+    beforeEach(async () => {
+      userService.updateUserRole.mockResolvedValue(user);
+      result = await userController.updateUserRole(payload, ctx);
+    });
+
+    it('should call userService', () => {
+      expect(userService.updateUserRole).toHaveBeenCalledWith(payload);
+    });
+
+    it('should return updated user', () => {
+      expect(result).toEqual(user);
+    });
+
+    it('should throw RpcException when user not found', async () => {
+      userService.updateUserRole.mockRejectedValueOnce(
+        new RpcException('User not found'),
+      );
+      await expect(userController.updateUserRole(payload, ctx)).rejects.toThrow(
         RpcException,
       );
     });

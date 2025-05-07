@@ -4,6 +4,7 @@ import {
   CreateUserPayload,
   GetUserByIdPayload,
   GetUserByNamePayload,
+  UpdateUserRolePayload,
   User,
   UserWithoutPassword,
 } from '@app/common/contracts/user';
@@ -89,5 +90,40 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async updateUserRole(
+    payload: UpdateUserRolePayload,
+  ): Promise<UserWithoutPassword> {
+    const { userId, role } = payload;
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      this.logger.error(`User with ID ${userId} not found`);
+      throw new RpcException({
+        message: `User with ID ${userId} not found`,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
+    }
+
+    const existingRole = user.role;
+
+    if (existingRole === role) {
+      this.logger.warn(
+        `User with ID ${userId} already has the role ${existingRole.toUpperCase()}`,
+      );
+      return user;
+    }
+
+    user.role = role;
+    const saved = await this.userRepository.save(user);
+
+    this.logger.log(
+      `Role of the user with ID ${userId} has been successfully changed from ${existingRole.toUpperCase()} to ${role.toUpperCase()}`,
+    );
+
+    return saved;
   }
 }

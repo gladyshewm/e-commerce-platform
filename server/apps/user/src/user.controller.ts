@@ -10,6 +10,7 @@ import { BaseRpcController, RmqService } from '@app/rmq';
 import { GetUserByIdDto } from './dto/user-get-by-id.dto';
 import { GetUserByNameDto } from './dto/user-get-by-name.dto';
 import { CreateUserDto } from './dto/user-create.dto';
+import { UpdateUserRoleDto } from './dto/user-update-role.dto';
 
 @Controller()
 export class UserController extends BaseRpcController {
@@ -40,6 +41,16 @@ export class UserController extends BaseRpcController {
   ) {
     return this.handleMessage(ctx, () =>
       this.userService.getUserByName(payload),
+    );
+  }
+
+  @MessagePattern('update_user_role')
+  async updateUserRole(
+    @Payload() payload: UpdateUserRoleDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.userService.updateUserRole(payload),
     );
   }
 }
