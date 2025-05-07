@@ -17,10 +17,12 @@ import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { handleRpcError } from '../common/utils/rpc-exception.utils';
 import { AddStockDto } from './dto/inventory-add-stock.dto';
-import { JwtAuthGuard } from '@app/common/auth';
 import { InventoryDto } from './dto/inventory.dto';
+import { JwtAuthGuard, Roles, RolesGuard } from '@app/common/auth';
+import { UserRole } from '@app/common/database/enums';
 
 @ApiTags('inventory')
+@UseGuards(JwtAuthGuard)
 @Controller('inventory')
 export class InventoryController {
   constructor(
@@ -29,12 +31,17 @@ export class InventoryController {
   ) {}
 
   @Patch(':productId/add-stock')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Increase the quantity of the product in stock' })
   @ApiResponse({
     status: 200,
     type: InventoryDto,
     description: 'Returns the updated inventory',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Access denied for your role',
   })
   @ApiResponse({
     status: 404,

@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsIP,
   IsNotEmpty,
   IsNumber,
@@ -6,6 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 import { LoginPayload } from '@app/common/contracts/auth';
+import { UserRole } from '@app/common/database/enums';
 
 export class LoginDto implements LoginPayload {
   @IsNumber()
@@ -15,6 +17,10 @@ export class LoginDto implements LoginPayload {
   @IsString()
   @IsNotEmpty()
   username: string;
+
+  @IsEnum(UserRole)
+  @IsNotEmpty()
+  role: UserRole;
 
   @IsIP()
   @IsOptional()

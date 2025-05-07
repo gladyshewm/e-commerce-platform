@@ -16,6 +16,7 @@ import { UserWithoutPassword } from '@app/common/contracts/user';
 import { LoginDto } from './dto/auth-login.dto';
 import { RefreshDto } from './dto/auth-refresh.dto';
 import { LogoutDto } from './dto/auth-logout.dto';
+import { UserRole } from '@app/common/database/enums';
 
 jest.mock('./auth.service');
 
@@ -150,6 +151,7 @@ describe('AuthController', () => {
     const payload: LoginDto = {
       id: 1,
       username: 'test',
+      role: UserRole.CUSTOMER,
       ipAddress: '127.0.0.1',
       userAgent: 'test',
     };

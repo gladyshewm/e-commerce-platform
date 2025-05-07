@@ -57,9 +57,13 @@ export class AuthService {
   }
 
   async login(loginPayload: LoginPayload): Promise<LoginResponse> {
-    const { id, username, ipAddress, userAgent } = loginPayload;
+    const { id, username, role, ipAddress, userAgent } = loginPayload;
 
-    const tokens = await this.tokenService.getTokens(id, username);
+    const tokens = await this.tokenService.getTokens({
+      userId: id,
+      username,
+      userRole: role,
+    });
     await this.tokenService.updateRefreshToken({
       userId: id,
       refreshToken: tokens.refreshToken,
@@ -95,10 +99,11 @@ export class AuthService {
       });
     }
 
-    const tokens = await this.tokenService.getTokens(
-      tokenRecord.user.id,
-      tokenRecord.user.username,
-    );
+    const tokens = await this.tokenService.getTokens({
+      userId: tokenRecord.user.id,
+      username: tokenRecord.user.username,
+      userRole: tokenRecord.user.role,
+    });
 
     await this.tokenService.removeRefreshTokenById(tokenRecord.id);
     await this.tokenService.updateRefreshToken({

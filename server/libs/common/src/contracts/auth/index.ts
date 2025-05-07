@@ -6,3 +6,4 @@ export * from './auth-login.interface';
 export * from './auth-login-response.interface';
 export * from './auth-refresh.interface';
 export * from './auth.logout.interface';
+export * from './jwt-payload.interface';

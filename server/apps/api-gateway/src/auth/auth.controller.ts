@@ -80,10 +80,10 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
     const { userAgent, ipAddress } = extractRequestMeta(req);
-    const { id, username } = user;
+    const { id, username, role } = user;
     const tokens = await lastValueFrom<LoginResponse>(
       this.authServiceClient
-        .send('login', { id, username, userAgent, ipAddress })
+        .send('login', { id, username, role, userAgent, ipAddress })
         .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, tokens.refreshToken);
@@ -126,6 +126,8 @@ export class AuthController {
 
     return { accessToken: tokens.accessToken };
   }
+
+  // TODO: выходить по accessToken с JwtGuard вместо refresh ???
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)

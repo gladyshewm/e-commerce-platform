@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Inject,
-  Logger,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -23,17 +16,15 @@ import { handleRpcError } from '../common/utils/rpc-exception.utils';
 import { Order } from '@app/common/contracts/order';
 import { OrderDto } from './dto/order.dto';
 
-@ApiTags('orders')
 @Controller('orders')
+@UseGuards(JwtAuthGuard)
+@ApiTags('orders')
 export class OrderController {
-  private readonly logger = new Logger(OrderController.name);
-
   constructor(
     @Inject(ORDER_SERVICE) private readonly orderServiceClient: ClientProxy,
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Create order' })
   @ApiResponse({
     status: 201,

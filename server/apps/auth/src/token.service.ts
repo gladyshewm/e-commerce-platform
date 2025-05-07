@@ -2,12 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { LoginResponse, RefreshPayload } from '@app/common/contracts/auth';
+import {
+  JwtPayload,
+  LoginResponse,
+  RefreshPayload,
+} from '@app/common/contracts/auth';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenEntity } from '@app/common/database/entities';
 import { LessThan, Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { JwtPayload } from './types/jwt-payload.interface';
+import { GetTokensPayload } from './types/get-tokens-payload.interface';
 
 @Injectable()
 export class TokenService {
@@ -35,9 +39,7 @@ export class TokenService {
     }
   }
 
-  async getTokens(userId: number, username: string): Promise<LoginResponse> {
-    const payload = { userId, username };
-
+  async getTokens(payload: GetTokensPayload): Promise<LoginResponse> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('JWT_ACCESS_SECRET'),

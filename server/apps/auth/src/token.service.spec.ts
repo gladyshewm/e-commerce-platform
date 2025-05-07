@@ -6,8 +6,13 @@ import { TokenEntity, UserEntity } from '@app/common/database/entities';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { LoginResponse, RefreshPayload } from '@app/common/contracts/auth';
-import { JwtPayload } from './types/jwt-payload.interface';
+import {
+  JwtPayload,
+  LoginResponse,
+  RefreshPayload,
+} from '@app/common/contracts/auth';
+import { GetTokensPayload } from './types/get-tokens-payload.interface';
+import { UserRole } from '@app/common/database/enums';
 
 jest.mock('bcrypt');
 
@@ -97,22 +102,26 @@ describe('TokenService', () => {
 
   describe('getTokens', () => {
     let result: LoginResponse;
-    const [userId, username] = [1, 'test'];
+    const payload: GetTokensPayload = {
+      userId: 1,
+      username: 'mock-username',
+      userRole: UserRole.CUSTOMER,
+    };
 
     beforeEach(async () => {
-      result = await tokenService.getTokens(userId, username);
+      result = await tokenService.getTokens(payload);
     });
 
     it('should generate access and refresh tokens', () => {
       expect(jwtService.signAsync).toHaveBeenCalledTimes(2);
-      expect(jwtService.signAsync).toHaveBeenCalledWith(
-        { userId, username },
-        { secret: 'access-secret', expiresIn: '1h' },
-      );
-      expect(jwtService.signAsync).toHaveBeenCalledWith(
-        { userId, username },
-        { secret: 'refresh-secret', expiresIn: '7d' },
-      );
+      expect(jwtService.signAsync).toHaveBeenCalledWith(payload, {
+        secret: 'access-secret',
+        expiresIn: '1h',
+      });
+      expect(jwtService.signAsync).toHaveBeenCalledWith(payload, {
+        secret: 'refresh-secret',
+        expiresIn: '7d',
+      });
     });
 
     it('should get secrets and expiration times from config', () => {
@@ -141,6 +150,7 @@ describe('TokenService', () => {
     const jwtPayload: JwtPayload = {
       userId: 1,
       username: 'test',
+      userRole: UserRole.CUSTOMER,
       iat: 1,
       exp: 2,
     };
@@ -173,6 +183,7 @@ describe('TokenService', () => {
     const jwtPayload: JwtPayload = {
       userId: 1,
       username: 'test',
+      userRole: UserRole.CUSTOMER,
       iat: 1,
       exp: 222,
     };
@@ -221,6 +232,7 @@ describe('TokenService', () => {
     const jwtPayload: JwtPayload = {
       userId: 1,
       username: 'test',
+      userRole: UserRole.CUSTOMER,
       iat: 1,
       exp: 222,
     };
@@ -367,6 +379,7 @@ describe('TokenService', () => {
     const jwtPayload: JwtPayload = {
       userId: 1,
       username: 'test',
+      userRole: UserRole.CUSTOMER,
       iat: 1,
       exp: 222,
     };

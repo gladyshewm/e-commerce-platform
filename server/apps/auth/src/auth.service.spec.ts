@@ -6,6 +6,7 @@ import { USER_SERVICE } from '@app/common/constants';
 import { of } from 'rxjs';
 import { TokenService } from './token.service';
 import {
+  JwtPayload,
   LoginPayload,
   LoginResponse,
   LogoutPayload,
@@ -15,7 +16,7 @@ import {
 } from '@app/common/contracts/auth';
 import { User } from '@app/common/contracts/user';
 import { TokenEntity, UserEntity } from '@app/common/database/entities';
-import { JwtPayload } from './types/jwt-payload.interface';
+import { UserRole } from '@app/common/database/enums';
 
 jest.mock('./token.service');
 jest.mock('bcrypt');
@@ -100,6 +101,7 @@ describe('AuthService', () => {
     const payload: LoginPayload = {
       id: 1,
       username: 'test_name',
+      role: UserRole.CUSTOMER,
       ipAddress: '127.0.0.0',
       userAgent: 'test',
     };
@@ -114,10 +116,11 @@ describe('AuthService', () => {
     });
 
     it('should get tokens from tokenService', () => {
-      expect(tokenService.getTokens).toHaveBeenCalledWith(
-        payload.id,
-        payload.username,
-      );
+      expect(tokenService.getTokens).toHaveBeenCalledWith({
+        userId: payload.id,
+        username: payload.username,
+        userRole: payload.role,
+      });
     });
 
     it('should update refreshToken', () => {
@@ -189,10 +192,11 @@ describe('AuthService', () => {
     });
 
     it('should get tokens from tokenService', () => {
-      expect(tokenService.getTokens).toHaveBeenCalledWith(
-        tokenRecord.user.id,
-        tokenRecord.user.username,
-      );
+      expect(tokenService.getTokens).toHaveBeenCalledWith({
+        userId: tokenRecord.user.id,
+        username: tokenRecord.user.username,
+        userRole: tokenRecord.user.role,
+      });
     });
 
     it('should remove refresh token from DB', () => {
