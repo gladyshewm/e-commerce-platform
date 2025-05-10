@@ -1,7 +1,7 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { USER_SERVICE } from '@app/common/constants';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { catchError, lastValueFrom } from 'rxjs';
+import { catchError, lastValueFrom, of } from 'rxjs';
 import * as bcrypt from 'bcrypt';
 import {
   LoginResponse,
@@ -10,8 +10,13 @@ import {
   ValidateUserResponse,
   LogoutPayload,
   RefreshPayload,
+  ValidateUserOAuthPayload,
 } from '@app/common/contracts/auth';
-import { User } from '@app/common/contracts/user';
+import {
+  User,
+  UserWithOAuth,
+  UserWithoutPassword,
+} from '@app/common/contracts/user';
 import { TokenService } from './token.service';
 
 @Injectable()
@@ -146,5 +151,69 @@ export class AuthService {
     }
 
     await this.tokenService.removeAllRefreshTokens(logoutPayload.refreshToken);
+  }
+
+  async validateUserOAuth(
+    payload: ValidateUserOAuthPayload,
+  ): Promise<ValidateUserResponse> {
+    const { provider, providerId, username, email } = payload;
+
+    const existingOAuthUser = await lastValueFrom<UserWithOAuth | null>(
+      this.userServiceClient
+        .send('get_user_by_oauth', { provider, providerId })
+        .pipe(catchError(() => of(null))),
+    );
+
+    if (existingOAuthUser) {
+      const { oauthAccounts, ...user } = existingOAuthUser;
+      return user;
+    }
+
+    const existingUser = await lastValueFrom<User | null>(
+      this.userServiceClient
+        .send('get_user_by_email', { email })
+        .pipe(catchError(() => of(null))),
+    );
+
+    let user: UserWithoutPassword;
+
+    if (existingUser) {
+      user = await lastValueFrom<UserWithoutPassword>(
+        this.userServiceClient
+          .send('link_user_with_oauth', {
+            userId: existingUser.id,
+            provider,
+            providerId,
+          })
+          .pipe(
+            catchError((error) => {
+              throw new RpcException({
+                message: error.message,
+                statusCode: error.statusCode,
+              });
+            }),
+          ),
+      );
+    } else {
+      user = await lastValueFrom<UserWithoutPassword>(
+        this.userServiceClient
+          .send('create_user_oauth', {
+            username,
+            email,
+            provider,
+            providerId,
+          })
+          .pipe(
+            catchError((error) => {
+              throw new RpcException({
+                message: error.message,
+                statusCode: error.statusCode,
+              });
+            }),
+          ),
+      );
+    }
+
+    return user;
   }
 }

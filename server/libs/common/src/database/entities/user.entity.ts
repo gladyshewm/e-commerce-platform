@@ -10,6 +10,7 @@ import { TokenEntity } from './token.entity';
 import { OrderEntity } from './order.entity';
 import { UserRole } from '../enums';
 import { ReviewEntity } from './review.entity';
+import { UserOAuthEntity } from './user-oauth.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -22,8 +23,8 @@ export class UserEntity {
   @Column({ unique: true })
   email: string;
 
-  @Column({ select: false })
-  password: string;
+  @Column({ nullable: true, select: false })
+  password?: string;
 
   @Column({
     type: 'enum',
@@ -43,6 +44,9 @@ export class UserEntity {
 
   @OneToMany(() => TokenEntity, (token) => token.user, { cascade: true })
   tokens: TokenEntity[];
+
+  @OneToMany(() => UserOAuthEntity, (oauth) => oauth.user, { cascade: true })
+  oauthAccounts: UserOAuthEntity[];
 
   @OneToMany(() => OrderEntity, (order) => order.user, { cascade: true })
   orders: OrderEntity[];

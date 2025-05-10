@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -11,7 +12,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { LocalAuthGuard } from '@app/common/auth';
+import { GoogleAuthGuard, LocalAuthGuard } from '@app/common/auth';
 import { lastValueFrom } from 'rxjs';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
@@ -127,8 +128,6 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
-  // TODO: выходить по accessToken с JwtGuard вместо refresh ???
-
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User logout' })
@@ -201,5 +200,29 @@ export class AuthController {
     res.clearCookie('refreshToken');
 
     return { message: 'Logged out from all sessions successfully' };
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleLogin() {}
+
+  @Get('google/redirect')
+  @UseGuards(GoogleAuthGuard)
+  async googleLoginCallback(
+    @CurrentUser() user: UserWithoutPassword,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { userAgent, ipAddress } = extractRequestMeta(req);
+    const { id, username, role } = user;
+
+    const tokens = await lastValueFrom<LoginResponse>(
+      this.authServiceClient
+        .send('login', { id, username, role, userAgent, ipAddress })
+        .pipe(handleRpcError()),
+    );
+    setRefreshTokenCookie(res, tokens.refreshToken);
+
+    return { accessToken: tokens.accessToken };
   }
 }

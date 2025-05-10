@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { USER_SERVICE } from '@app/common/constants';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { TokenService } from './token.service';
 import {
   JwtPayload,
@@ -11,10 +11,15 @@ import {
   LoginResponse,
   LogoutPayload,
   RefreshPayload,
+  ValidateUserOAuthPayload,
   ValidateUserPayload,
   ValidateUserResponse,
 } from '@app/common/contracts/auth';
-import { User } from '@app/common/contracts/user';
+import {
+  User,
+  UserWithOAuth,
+  UserWithoutPassword,
+} from '@app/common/contracts/user';
 import { TokenEntity, UserEntity } from '@app/common/database/entities';
 import { UserRole } from '@app/common/database/enums';
 
@@ -273,6 +278,109 @@ describe('AuthService', () => {
     it('should call tokenService to remove all refresh tokens from DB', () => {
       expect(tokenService.removeAllRefreshTokens).toHaveBeenCalledWith(
         payload.refreshToken,
+      );
+    });
+  });
+
+  describe('validateUserOAuth', () => {
+    let result: ValidateUserResponse;
+    const payload: ValidateUserOAuthPayload = {
+      username: 'test',
+      email: 'test',
+      provider: 'test',
+      providerId: 'test',
+    };
+    const user = {
+      id: 1,
+      username: 'test',
+      email: 'test',
+      password: 'hashed',
+    } as User;
+    const userWithoutPassword = {
+      id: 1,
+      username: 'test',
+      email: 'test',
+    } as UserWithoutPassword;
+
+    it('should return user if it already exists with the same OAuth-provider', async () => {
+      const oauthUser = {
+        id: 1,
+        username: 'test',
+        email: 'test',
+        oauthAccounts: [{ id: 1, provider: 'test', providerId: 'test' }],
+      } as UserWithOAuth;
+      userServiceClient.send.mockReturnValueOnce(of(oauthUser));
+      result = await authService.validateUserOAuth(payload);
+
+      expect(result).toEqual({
+        id: 1,
+        username: 'test',
+        email: 'test',
+      });
+    });
+
+    it('should check if there is already a user with this email', async () => {
+      userServiceClient.send.mockReturnValueOnce(of(null));
+      userServiceClient.send.mockReturnValueOnce(of(user));
+      userServiceClient.send.mockReturnValueOnce(of(userWithoutPassword));
+      result = await authService.validateUserOAuth(payload);
+
+      expect(userServiceClient.send).toHaveBeenCalledWith('get_user_by_email', {
+        email: payload.email,
+      });
+    });
+
+    it('should link user account with OAuth if it exists', async () => {
+      userServiceClient.send.mockReturnValueOnce(of(null));
+      userServiceClient.send.mockReturnValueOnce(of(user));
+      userServiceClient.send.mockReturnValueOnce(of(userWithoutPassword));
+      result = await authService.validateUserOAuth(payload);
+
+      expect(userServiceClient.send).toHaveBeenCalledWith(
+        'link_user_with_oauth',
+        {
+          userId: user.id,
+          provider: payload.provider,
+          providerId: payload.providerId,
+        },
+      );
+      expect(userServiceClient.send).not.toHaveBeenCalledWith(
+        'create_user_oauth',
+        expect.anything(),
+      );
+      expect(result).toEqual(userWithoutPassword);
+    });
+
+    it('should create user account with OAuth if it does not exist', async () => {
+      userServiceClient.send.mockReturnValueOnce(of(null));
+      userServiceClient.send.mockReturnValueOnce(of(null));
+      userServiceClient.send.mockReturnValueOnce(of(userWithoutPassword));
+      result = await authService.validateUserOAuth(payload);
+
+      expect(userServiceClient.send).not.toHaveBeenCalledWith(
+        'link_user_with_oauth',
+        expect.anything(),
+      );
+      expect(userServiceClient.send).toHaveBeenCalledWith('create_user_oauth', {
+        username: payload.username,
+        email: payload.email,
+        provider: payload.provider,
+        providerId: payload.providerId,
+      });
+      expect(result).toEqual(userWithoutPassword);
+    });
+
+    it('should throw RpcException when user creation or link with OAuth failed', async () => {
+      userServiceClient.send.mockReturnValueOnce(of(null));
+      userServiceClient.send.mockReturnValueOnce(of(null));
+      userServiceClient.send.mockReturnValueOnce(
+        throwError(() => ({
+          message: 'Failed',
+        })),
+      );
+
+      await expect(authService.validateUserOAuth(payload)).rejects.toThrow(
+        RpcException,
       );
     });
   });

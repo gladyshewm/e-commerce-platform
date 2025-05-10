@@ -1,14 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { Repository } from 'typeorm';
-import { UserEntity } from '@app/common/database/entities';
+import { UserEntity, UserOAuthEntity } from '@app/common/database/entities';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
+  CreateUserOAuthPayload,
   CreateUserPayload,
+  GetUserByEmailPayload,
   GetUserByIdPayload,
   GetUserByNamePayload,
+  GetUserByOAuthPayload,
+  LinkUserWithOAuthPayload,
   UpdateUserRolePayload,
   User,
+  UserWithOAuth,
   UserWithoutPassword,
 } from '@app/common/contracts/user';
 import { RpcException } from '@nestjs/microservices';
@@ -21,6 +26,7 @@ jest.mock('bcrypt', () => ({
 describe('UserService', () => {
   let userService: jest.Mocked<UserService>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
+  let oauthRepository: jest.Mocked<Repository<UserOAuthEntity>>;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
@@ -36,12 +42,25 @@ describe('UserService', () => {
             findOneBy: jest.fn(),
           },
         },
+        {
+          provide: getRepositoryToken(UserOAuthEntity),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            find: jest.fn(),
+            findOne: jest.fn(),
+            findOneBy: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     userService = app.get<jest.Mocked<UserService>>(UserService);
     userRepository = app.get<jest.Mocked<Repository<UserEntity>>>(
       getRepositoryToken(UserEntity),
+    );
+    oauthRepository = app.get<jest.Mocked<Repository<UserOAuthEntity>>>(
+      getRepositoryToken(UserOAuthEntity),
     );
   });
 
@@ -218,6 +237,162 @@ describe('UserService', () => {
         ...user,
         role: payload.role,
       });
+    });
+  });
+
+  describe('getUserByOAuth', () => {
+    let result: UserWithOAuth;
+    const payload: GetUserByOAuthPayload = {
+      provider: 'provider',
+      providerId: 'providerId',
+    };
+    const user = {
+      id: 109,
+      username: 'test_user',
+      email: 'email',
+      oauthAccounts: [],
+    } as UserWithOAuth;
+
+    it('should return user', async () => {
+      userRepository.findOne.mockResolvedValue(user as UserEntity);
+      result = await userService.getUserByOAuth(payload);
+      expect(result).toEqual(user);
+    });
+
+    it('should throw RpcException when user not found', async () => {
+      userRepository.findOne.mockResolvedValueOnce(null);
+      await expect(userService.getUserByOAuth(payload)).rejects.toThrow(
+        RpcException,
+      );
+    });
+  });
+
+  describe('getUserByEmail', () => {
+    let result: UserWithoutPassword;
+    const payload: GetUserByEmailPayload = {
+      email: 'test@email.com',
+    };
+    const user = {
+      id: 109,
+      username: 'test_user',
+      email: 'email',
+      oauthAccounts: [],
+    } as UserWithOAuth;
+
+    it('should return user', async () => {
+      userRepository.findOneBy.mockResolvedValue(user as UserEntity);
+      result = await userService.getUserByEmail(payload);
+      expect(result).toEqual(user);
+    });
+
+    it('should throw RpcException when user not found', async () => {
+      userRepository.findOneBy.mockResolvedValueOnce(null);
+      await expect(userService.getUserByEmail(payload)).rejects.toThrow(
+        RpcException,
+      );
+    });
+  });
+
+  describe('linkUserWithOAuth', () => {
+    let result: UserWithoutPassword;
+    const payload: LinkUserWithOAuthPayload = {
+      userId: 109,
+      provider: 'provider',
+      providerId: '123j213123',
+    };
+    const user = {
+      id: 109,
+      username: 'test_user',
+      email: 'email',
+      oauthAccounts: [],
+    } as UserEntity;
+    const oauthAccount: UserOAuthEntity = {
+      id: 1,
+      provider: payload.provider,
+      providerId: payload.providerId,
+      user: { id: payload.userId } as UserEntity,
+    };
+
+    beforeEach(async () => {
+      userRepository.save.mockResolvedValue(user);
+      oauthRepository.create.mockReturnValue(oauthAccount);
+    });
+
+    it('should throw RpcException when user not found', async () => {
+      userRepository.findOne.mockResolvedValueOnce(null);
+      await expect(userService.linkUserWithOAuth(payload)).rejects.toThrow(
+        RpcException,
+      );
+    });
+
+    it('should save user with updated oauthAccounts', async () => {
+      userRepository.findOne.mockResolvedValueOnce(user);
+      result = await userService.linkUserWithOAuth(payload);
+
+      expect(userRepository.save).toHaveBeenCalledWith({
+        ...user,
+        oauthAccounts: [oauthAccount],
+      });
+    });
+
+    it('should return updated user', async () => {
+      const { oauthAccounts, ...rest } = user;
+      userRepository.findOne.mockResolvedValueOnce(user);
+      result = await userService.linkUserWithOAuth(payload);
+
+      expect(result).toEqual(rest);
+    });
+  });
+
+  describe('createUserOAuth', () => {
+    let result: UserWithoutPassword;
+    const payload: CreateUserOAuthPayload = {
+      username: 'username',
+      email: 'email@email.com',
+      provider: 'provider',
+      providerId: '123j213123',
+    };
+    const user = {
+      id: 1,
+      username: 'test_user',
+      email: 'email',
+    } as UserWithoutPassword;
+    const savedUser = {
+      ...user,
+      password: null,
+    } as UserEntity;
+    const oauth: UserOAuthEntity = {
+      id: 1,
+      provider: payload.provider,
+      providerId: payload.providerId,
+      user: { id: savedUser.id } as UserEntity,
+    };
+
+    beforeEach(async () => {
+      userRepository.findOneBy.mockResolvedValue(null);
+      userRepository.create.mockReturnValue(savedUser);
+      userRepository.save.mockResolvedValue(savedUser);
+      oauthRepository.create.mockReturnValue(oauth);
+      result = await userService.createUserOAuth(payload);
+    });
+
+    it('should throw RpcException if user already exists', async () => {
+      userRepository.findOneBy.mockResolvedValue(user as UserEntity);
+      await expect(userService.createUserOAuth(payload)).rejects.toThrow(
+        RpcException,
+      );
+    });
+
+    it('should save user in DB', () => {
+      expect(userRepository.save).toHaveBeenCalledWith(savedUser);
+    });
+
+    it('should save oauth account in DB', () => {
+      expect(oauthRepository.save).toHaveBeenCalledWith(oauth);
+    });
+
+    it('should return user', () => {
+      expect(result).toEqual(user);
     });
   });
 });

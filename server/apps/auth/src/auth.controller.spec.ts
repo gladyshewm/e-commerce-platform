@@ -17,6 +17,7 @@ import { LoginDto } from './dto/auth-login.dto';
 import { RefreshDto } from './dto/auth-refresh.dto';
 import { LogoutDto } from './dto/auth-logout.dto';
 import { UserRole } from '@app/common/database/enums';
+import { ValidateUserOauthDto } from './dto/auth-validate-user-oauth.dto';
 
 jest.mock('./auth.service');
 
@@ -250,6 +251,39 @@ describe('AuthController', () => {
 
     it('should return success', () => {
       expect(result).toEqual({ success: true });
+    });
+
+    it('should call ack', () => {
+      expect(rmqService.ack).toHaveBeenCalledTimes(1);
+      expect(rmqService.ack).toHaveBeenCalledWith(ctx);
+    });
+  });
+
+  describe('validateUserOAuth', () => {
+    let result: ValidateUserResponse;
+    const payload: ValidateUserOauthDto = {
+      username: 'test',
+      email: 'test',
+      provider: 'test',
+      providerId: 'test',
+    };
+    const user = {
+      id: 1,
+      username: 'test',
+      email: 'test',
+    } as ValidateUserResponse;
+
+    beforeEach(async () => {
+      authService.validateUserOAuth.mockResolvedValue(user);
+      result = await authController.validateUserOAuth(payload, ctx);
+    });
+
+    it('should call authService', () => {
+      expect(authService.validateUserOAuth).toHaveBeenCalledWith(payload);
+    });
+
+    it('should return success', () => {
+      expect(result).toEqual(user);
     });
 
     it('should call ack', () => {

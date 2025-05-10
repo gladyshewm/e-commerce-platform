@@ -3,3 +3,8 @@ export * from './user-get-by-id.interface';
 export * from './user-get-by-name.interface';
 export * from './user-create.interface';
 export * from './user-update-role.interface';
+export * from './user-oauth.interface';
+export * from './user-get-by-oauth.interface';
+export * from './user-link-with-oauth.interface';
+export * from './user-create-oauth.interface';
+export * from './user-get-by-email.interface';

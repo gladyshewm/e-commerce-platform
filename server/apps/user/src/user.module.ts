@@ -4,7 +4,7 @@ import { UserService } from './user.service';
 import { ConfigModule } from '@nestjs/config';
 import { RmqModule } from '@app/rmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from '@app/common/database/entities';
+import { UserEntity, UserOAuthEntity } from '@app/common/database/entities';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import * as Joi from 'joi';
 
@@ -24,7 +24,7 @@ import * as Joi from 'joi';
       }),
     }),
     TypeOrmConfigModule,
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, UserOAuthEntity]),
     RmqModule,
   ],
   controllers: [UserController],

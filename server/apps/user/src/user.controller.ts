@@ -11,6 +11,10 @@ import { GetUserByIdDto } from './dto/user-get-by-id.dto';
 import { GetUserByNameDto } from './dto/user-get-by-name.dto';
 import { CreateUserDto } from './dto/user-create.dto';
 import { UpdateUserRoleDto } from './dto/user-update-role.dto';
+import { GetUserByOAuthDto } from './dto/user-get-by-oauth.dto';
+import { LinkUserWithOAuthDto } from './dto/user-link-with-oauth.dto';
+import { CreateUserOAuthDto } from './dto/user-create-oauth.dto';
+import { GetUserByEmailDto } from './dto/user-get-by-email.dto';
 
 @Controller()
 export class UserController extends BaseRpcController {
@@ -51,6 +55,46 @@ export class UserController extends BaseRpcController {
   ) {
     return this.handleMessage(ctx, () =>
       this.userService.updateUserRole(payload),
+    );
+  }
+
+  @MessagePattern('get_user_by_oauth')
+  async getUserByOAuth(
+    @Payload() payload: GetUserByOAuthDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.userService.getUserByOAuth(payload),
+    );
+  }
+
+  @MessagePattern('get_user_by_email')
+  async getUserByEmail(
+    @Payload() payload: GetUserByEmailDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.userService.getUserByEmail(payload),
+    );
+  }
+
+  @MessagePattern('link_user_with_oauth')
+  async linkUserWithOAuth(
+    @Payload() payload: LinkUserWithOAuthDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.userService.linkUserWithOAuth(payload),
+    );
+  }
+
+  @MessagePattern('create_user_oauth')
+  async createUserOAuth(
+    @Payload() payload: CreateUserOAuthDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.userService.createUserOAuth(payload),
     );
   }
 }
