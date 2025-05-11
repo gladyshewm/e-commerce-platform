@@ -20,7 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { GetUserResponseDto } from './dto/user-get-response.dto';
-import { handleRpcError } from '../common/utils/rpc-exception.utils';
+import { handleRpcError } from '../common/utils/rpc-exception.util';
 import { CurrentUser } from '../common/decorators/user.decorator';
 import { seconds, Throttle } from '@nestjs/throttler';
 import { UserRole } from '@app/common/database/enums';

@@ -12,21 +12,24 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { GoogleAuthGuard, LocalAuthGuard } from '@app/common/auth';
+import { Request, Response } from 'express';
 import { lastValueFrom } from 'rxjs';
-import { AUTH_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { GoogleAuthGuard, LocalAuthGuard } from '@app/common/auth';
+import { AUTH_SERVICE } from '@app/common/constants';
+import { UserWithoutPassword } from '@app/common/contracts/user';
+import { LoginResponse, RegisterResponse } from '@app/common/contracts/auth';
 import { LoginDto } from './dto/auth-login.dto';
 import { LoginResponseDto } from './dto/auth-login-response.dto';
 import { RegisterDto } from './dto/auth-register.dto';
-import { UserWithoutPassword } from '@app/common/contracts/user';
-import { LoginResponse, RegisterResponse } from '@app/common/contracts/auth';
 import { RegisterResponseDto } from './dto/auth-register-response.dto';
-import { Request, Response } from 'express';
 import { extractRequestMeta } from '../common/utils/request.util';
-import { setRefreshTokenCookie } from '../common/utils/cookie.util';
-import { handleRpcError } from '../common/utils/rpc-exception.utils';
+import {
+  clearRefreshTokenCookie,
+  setRefreshTokenCookie,
+} from '../common/utils/cookie.util';
+import { handleRpcError } from '../common/utils/rpc-exception.util';
 import { CurrentUser } from '../common/decorators/user.decorator';
 
 @ApiTags('auth')
@@ -159,7 +162,7 @@ export class AuthController {
         .send('logout', { refreshToken })
         .pipe(handleRpcError()),
     );
-    res.clearCookie('refreshToken');
+    clearRefreshTokenCookie(res);
 
     return { message: 'Logged out successfully' };
   }
@@ -197,7 +200,7 @@ export class AuthController {
         .send('logout_all', { refreshToken })
         .pipe(handleRpcError()),
     );
-    res.clearCookie('refreshToken');
+    clearRefreshTokenCookie(res);
 
     return { message: 'Logged out from all sessions successfully' };
   }

@@ -12,7 +12,7 @@ import { CurrentUser } from '../common/decorators/user.decorator';
 import { User } from '@app/common/contracts/user';
 import { CreateOrderDto } from './dto/order-create.dto';
 import { lastValueFrom } from 'rxjs';
-import { handleRpcError } from '../common/utils/rpc-exception.utils';
+import { handleRpcError } from '../common/utils/rpc-exception.util';
 import { Order } from '@app/common/contracts/order';
 import { OrderDto } from './dto/order.dto';
 

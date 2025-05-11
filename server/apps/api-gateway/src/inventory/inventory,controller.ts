@@ -15,7 +15,7 @@ import {
 import { INVENTORY_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
-import { handleRpcError } from '../common/utils/rpc-exception.utils';
+import { handleRpcError } from '../common/utils/rpc-exception.util';
 import { AddStockDto } from './dto/inventory-add-stock.dto';
 import { InventoryDto } from './dto/inventory.dto';
 import { JwtAuthGuard, Roles, RolesGuard } from '@app/common/auth';

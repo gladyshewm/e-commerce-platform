@@ -7,3 +7,7 @@ export const setRefreshTokenCookie = (res: Response, refreshToken: string) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
+
+export const clearRefreshTokenCookie = (res: Response) => {
+  res.clearCookie('refreshToken');
+};
