@@ -5,16 +5,16 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { ORDER_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
-import { JwtAuthGuard } from '@app/common/auth';
-import { CurrentUser } from '../common/decorators/user.decorator';
-import { User } from '@app/common/contracts/user';
-import { CreateOrderDto } from './dto/order-create.dto';
 import { lastValueFrom } from 'rxjs';
-import { handleRpcError } from '../common/utils/rpc-exception.util';
+import { ORDER_SERVICE } from '@app/common/constants';
+import { User } from '@app/common/contracts/user';
 import { Order } from '@app/common/contracts/order';
+import { CreateOrderDto } from './dto/order-create.dto';
 import { OrderDto } from './dto/order.dto';
+import { JwtAuthGuard } from '../common/guards';
+import { CurrentUser } from '../common/decorators';
+import { handleRpcError } from '../common/utils';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)

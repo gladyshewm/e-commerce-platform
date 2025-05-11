@@ -12,14 +12,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { INVENTORY_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
-import { handleRpcError } from '../common/utils/rpc-exception.util';
+import { INVENTORY_SERVICE } from '@app/common/constants';
+import { UserRole } from '@app/common/database/enums';
 import { AddStockDto } from './dto/inventory-add-stock.dto';
 import { InventoryDto } from './dto/inventory.dto';
-import { JwtAuthGuard, Roles, RolesGuard } from '@app/common/auth';
-import { UserRole } from '@app/common/database/enums';
+import { JwtAuthGuard, RolesGuard } from '../common/guards';
+import { Roles } from '../common/decorators';
+import { handleRpcError } from '../common/utils';
 
 @ApiTags('inventory')
 @UseGuards(JwtAuthGuard)

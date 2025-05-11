@@ -16,7 +16,6 @@ import { Request, Response } from 'express';
 import { lastValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { GoogleAuthGuard, LocalAuthGuard } from '@app/common/auth';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { LoginResponse, RegisterResponse } from '@app/common/contracts/auth';
@@ -24,13 +23,17 @@ import { LoginDto } from './dto/auth-login.dto';
 import { LoginResponseDto } from './dto/auth-login-response.dto';
 import { RegisterDto } from './dto/auth-register.dto';
 import { RegisterResponseDto } from './dto/auth-register-response.dto';
-import { extractRequestMeta } from '../common/utils/request.util';
 import {
   clearRefreshTokenCookie,
   setRefreshTokenCookie,
 } from '../common/utils/cookie.util';
-import { handleRpcError } from '../common/utils/rpc-exception.util';
-import { CurrentUser } from '../common/decorators/user.decorator';
+import {
+  GithubAuthGuard,
+  GoogleAuthGuard,
+  LocalAuthGuard,
+} from '../common/guards';
+import { extractRequestMeta, handleRpcError } from '../common/utils';
+import { CurrentUser } from '../common/decorators';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -209,9 +212,33 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleLogin() {}
 
-  @Get('google/redirect')
+  @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleLoginCallback(
+    @CurrentUser() user: UserWithoutPassword,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { userAgent, ipAddress } = extractRequestMeta(req);
+    const { id, username, role } = user;
+
+    const tokens = await lastValueFrom<LoginResponse>(
+      this.authServiceClient
+        .send('login', { id, username, role, userAgent, ipAddress })
+        .pipe(handleRpcError()),
+    );
+    setRefreshTokenCookie(res, tokens.refreshToken);
+
+    return { accessToken: tokens.accessToken };
+  }
+
+  @Get('github')
+  @UseGuards(GithubAuthGuard)
+  async githubLogin() {}
+
+  @Get('github/callback')
+  @UseGuards(GithubAuthGuard)
+  async githubCallback(
     @CurrentUser() user: UserWithoutPassword,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,

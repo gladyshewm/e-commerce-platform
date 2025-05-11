@@ -7,24 +7,24 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard, Roles, RolesGuard } from '@app/common/auth';
-import { User, UserWithoutPassword } from '@app/common/contracts/user';
-import { lastValueFrom } from 'rxjs';
-import { USER_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
-import { GetUserDto } from './dto/user-get.dto';
+import { seconds, Throttle } from '@nestjs/throttler';
+import { lastValueFrom } from 'rxjs';
 import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { GetUserResponseDto } from './dto/user-get-response.dto';
-import { handleRpcError } from '../common/utils/rpc-exception.util';
-import { CurrentUser } from '../common/decorators/user.decorator';
-import { seconds, Throttle } from '@nestjs/throttler';
+import { USER_SERVICE } from '@app/common/constants';
+import { User, UserWithoutPassword } from '@app/common/contracts/user';
 import { UserRole } from '@app/common/database/enums';
+import { GetUserResponseDto } from './dto/user-get-response.dto';
+import { GetUserDto } from './dto/user-get.dto';
 import { UpdateUserRoleDto } from './dto/user-update-role.dto';
+import { JwtAuthGuard, RolesGuard } from '../common/guards';
+import { CurrentUser, Roles } from '../common/decorators';
+import { handleRpcError } from '../common/utils';
 
 @ApiTags('users')
 @Throttle({ default: { ttl: seconds(60), limit: 100 } })

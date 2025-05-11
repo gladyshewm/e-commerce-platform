@@ -3,9 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, lastValueFrom } from 'rxjs';
-import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
-import { AUTH_SERVICE, GOOGLE_PROVIDER } from '../constants';
-import { UserWithoutPassword } from '../contracts/user';
+import { Profile, Strategy } from 'passport-google-oauth20';
+import { AUTH_SERVICE } from '@app/common/constants';
+import { UserWithoutPassword } from '@app/common/contracts/user';
+import { GOOGLE_PROVIDER } from '../constants/oauth-providers.constant';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy) {
@@ -25,7 +26,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     _accessToken: string,
     _refreshToken: string,
     profile: Profile,
-    done: VerifyCallback,
   ) {
     const { id: providerId, name, emails } = profile;
     const user = await lastValueFrom(
@@ -43,6 +43,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
         ),
     );
 
-    done(null, user);
+    return user;
   }
 }

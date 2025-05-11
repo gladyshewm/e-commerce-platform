@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RmqModule } from '@app/rmq';
 import { AUTH_SERVICE, USER_SERVICE } from '@app/common/constants';
 import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy, LocalStrategy } from '@app/common/auth';
 import { PassportModule } from '@nestjs/passport';
 import { TokenService } from './token.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -53,6 +52,6 @@ import * as Joi from 'joi';
     ScheduleModule.forRoot(),
   ],
   controllers: [AuthController],
-  providers: [Logger, JwtStrategy, LocalStrategy, AuthService, TokenService],
+  providers: [Logger, AuthService, TokenService],
 })
 export class AuthModule {}

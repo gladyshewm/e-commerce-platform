@@ -16,11 +16,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { PRODUCT_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
-import { handleRpcError } from '../common/utils/rpc-exception.util';
-import { JwtAuthGuard, Roles, RolesGuard } from '@app/common/auth';
 import {
   Category,
   ProductWithCategory,
@@ -34,9 +31,12 @@ import { UpdateProductDto } from './dto/product-update.dto';
 import { GetProductsQueryDto } from './dto/product-get.dto';
 import { ReviewDto } from './dto/review.dto';
 import { CreateReviewDto } from './dto/review-create.dto';
-import { CurrentUser } from '../common/decorators/user.decorator';
+import { PRODUCT_SERVICE } from '@app/common/constants';
 import { User } from '@app/common/contracts/user';
 import { UserRole } from '@app/common/database/enums';
+import { handleRpcError } from '../common/utils';
+import { JwtAuthGuard, RolesGuard } from '../common/guards';
+import { CurrentUser, Roles } from '../common/decorators';
 
 @ApiTags('products')
 @Controller('products')

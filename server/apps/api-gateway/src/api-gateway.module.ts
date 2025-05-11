@@ -1,15 +1,15 @@
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import * as Joi from 'joi';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ProductModule } from './product/product.module';
 import { OrderModule } from './order/order.module';
-import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtStrategy } from '@app/common/auth';
 import { InventoryModule } from './inventory/inventory.module';
+import { JwtStrategy } from './common/strategies';
 
 @Module({
   imports: [
@@ -22,6 +22,12 @@ import { InventoryModule } from './inventory/inventory.module';
         JWT_ACCESS_SECRET_EXPIRATION_TIME: Joi.string().required(),
         JWT_REFRESH_SECRET: Joi.string().required(),
         JWT_REFRESH_SECRET_EXPIRATION_TIME: Joi.string().required(),
+        GOOGLE_CLIENT_ID: Joi.string().required(),
+        GOOGLE_CLIENT_SECRET: Joi.string().required(),
+        GOOGLE_CALLBACK_URL: Joi.string().required(),
+        GITHUB_CLIENT_ID: Joi.string().required(),
+        GITHUB_CLIENT_SECRET: Joi.string().required(),
+        GITHUB_CALLBACK_URL: Joi.string().required(),
         RMQ_URI: Joi.string().required(),
         RMQ_AUTH_QUEUE: Joi.string().required(),
         RMQ_USER_QUEUE: Joi.string().required(),

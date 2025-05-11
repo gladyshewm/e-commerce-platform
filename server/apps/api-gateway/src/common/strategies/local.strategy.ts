@@ -1,10 +1,10 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
-import { AUTH_SERVICE } from '../constants';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, lastValueFrom } from 'rxjs';
-import { ValidateUserResponse } from '../contracts/auth';
+import { AUTH_SERVICE } from '@app/common/constants';
+import { ValidateUserResponse } from '@app/common/contracts/auth';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
