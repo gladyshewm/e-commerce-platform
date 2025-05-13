@@ -7,6 +7,7 @@ import { Profile, Strategy } from 'passport-github2';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { GITHUB_PROVIDER } from '../constants';
+import { AuthenticatedUser } from '../types';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy) {
@@ -26,7 +27,7 @@ export class GithubStrategy extends PassportStrategy(Strategy) {
     _accessToken: string,
     _refreshToken: string,
     profile: Profile,
-  ) {
+  ): Promise<AuthenticatedUser> {
     const { id: providerId, username, emails } = profile;
     const email = emails[0].value;
     const user = await lastValueFrom(
@@ -44,6 +45,10 @@ export class GithubStrategy extends PassportStrategy(Strategy) {
         ),
     );
 
-    return user;
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    };
   }
 }

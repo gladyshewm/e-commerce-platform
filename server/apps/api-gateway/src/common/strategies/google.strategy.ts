@@ -7,6 +7,7 @@ import { Profile, Strategy } from 'passport-google-oauth20';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { GOOGLE_PROVIDER } from '../constants/oauth-providers.constant';
+import { AuthenticatedUser } from '../types';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy) {
@@ -26,7 +27,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     _accessToken: string,
     _refreshToken: string,
     profile: Profile,
-  ) {
+  ): Promise<AuthenticatedUser> {
     const { id: providerId, name, emails } = profile;
     const user = await lastValueFrom(
       this.authService
@@ -43,6 +44,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
         ),
     );
 
-    return user;
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+    };
   }
 }

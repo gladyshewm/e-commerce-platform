@@ -221,6 +221,7 @@ describe('UserService', () => {
 
     it('should save user with updated role', async () => {
       userRepository.findOne.mockResolvedValueOnce(user);
+      userRepository.save.mockResolvedValue({ ...user, password: 'hashed' });
       result = await userService.updateUserRole(payload);
 
       expect(userRepository.save).toHaveBeenCalledWith({
@@ -231,6 +232,7 @@ describe('UserService', () => {
 
     it('should return updated user', async () => {
       userRepository.findOne.mockResolvedValueOnce(user);
+      userRepository.save.mockResolvedValue({ ...user, password: 'hashed' });
       result = await userService.updateUserRole(payload);
 
       expect(result).toEqual({

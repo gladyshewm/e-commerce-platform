@@ -8,13 +8,13 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { ORDER_SERVICE } from '@app/common/constants';
-import { User } from '@app/common/contracts/user';
 import { Order } from '@app/common/contracts/order';
 import { CreateOrderDto } from './dto/order-create.dto';
 import { OrderDto } from './dto/order.dto';
 import { JwtAuthGuard } from '../common/guards';
 import { CurrentUser } from '../common/decorators';
 import { handleRpcError } from '../common/utils';
+import { AuthenticatedUser } from '../common/types';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -34,7 +34,7 @@ export class OrderController {
   @ApiBearerAuth()
   async createOrder(
     @Body() dto: CreateOrderDto,
-    @CurrentUser() user: Pick<User, 'id' | 'username'>,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return lastValueFrom<Order>(
       this.orderServiceClient

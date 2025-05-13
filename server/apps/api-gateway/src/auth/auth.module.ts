@@ -7,10 +7,12 @@ import {
   GoogleStrategy,
   LocalStrategy,
 } from '../common/strategies';
+import { GoogleOauthController } from './google-oauth.controller';
+import { GithubOauthController } from './github-oauth.controller';
 
 @Module({
   imports: [RmqModule.register({ name: AUTH_SERVICE })],
-  controllers: [AuthController],
+  controllers: [AuthController, GoogleOauthController, GithubOauthController],
   providers: [LocalStrategy, GoogleStrategy, GithubStrategy],
 })
 export class AuthModule {}

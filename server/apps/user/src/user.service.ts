@@ -179,7 +179,8 @@ export class UserService {
       `Role of the user with ID ${userId} has been successfully changed from ${existingRole.toUpperCase()} to ${role.toUpperCase()}`,
     );
 
-    return saved;
+    const { password, ...rest } = saved;
+    return rest;
   }
 
   async linkUserWithOAuth(

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -17,7 +16,6 @@ import { lastValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AUTH_SERVICE } from '@app/common/constants';
-import { UserWithoutPassword } from '@app/common/contracts/user';
 import { LoginResponse, RegisterResponse } from '@app/common/contracts/auth';
 import { LoginDto } from './dto/auth-login.dto';
 import { LoginResponseDto } from './dto/auth-login-response.dto';
@@ -27,13 +25,11 @@ import {
   clearRefreshTokenCookie,
   setRefreshTokenCookie,
 } from '../common/utils/cookie.util';
-import {
-  GithubAuthGuard,
-  GoogleAuthGuard,
-  LocalAuthGuard,
-} from '../common/guards';
+import { LocalAuthGuard } from '../common/guards';
 import { extractRequestMeta, handleRpcError } from '../common/utils';
 import { CurrentUser } from '../common/decorators';
+import { AuthenticatedUser } from '../common/types';
+import { LogoutResponseDto } from './dto/auth-logout-response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -82,7 +78,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(
-    @CurrentUser() user: UserWithoutPassword,
+    @CurrentUser() user: AuthenticatedUser,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<LoginResponseDto> {
@@ -139,7 +135,7 @@ export class AuthController {
   @ApiOperation({ summary: 'User logout' })
   @ApiResponse({
     status: 200,
-    example: { message: 'Logged out successfully' },
+    type: LogoutResponseDto,
     description: 'User logged out',
   })
   @ApiResponse({
@@ -149,7 +145,7 @@ export class AuthController {
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string }> {
+  ): Promise<LogoutResponseDto> {
     const { refreshToken } = extractRequestMeta(req);
 
     if (!refreshToken) {
@@ -175,7 +171,7 @@ export class AuthController {
   @ApiOperation({ summary: 'User logout from all sessions' })
   @ApiResponse({
     status: 200,
-    example: { message: 'Logged out from all sessions successfully' },
+    type: LogoutResponseDto,
     description: 'User logged out from all sessions',
   })
   @ApiResponse({
@@ -185,7 +181,7 @@ export class AuthController {
   async logoutAll(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<LogoutResponseDto> {
     const { refreshToken } = extractRequestMeta(req);
 
     if (!refreshToken) {
@@ -206,53 +202,5 @@ export class AuthController {
     clearRefreshTokenCookie(res);
 
     return { message: 'Logged out from all sessions successfully' };
-  }
-
-  @Get('google')
-  @UseGuards(GoogleAuthGuard)
-  async googleLogin() {}
-
-  @Get('google/callback')
-  @UseGuards(GoogleAuthGuard)
-  async googleLoginCallback(
-    @CurrentUser() user: UserWithoutPassword,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const { userAgent, ipAddress } = extractRequestMeta(req);
-    const { id, username, role } = user;
-
-    const tokens = await lastValueFrom<LoginResponse>(
-      this.authServiceClient
-        .send('login', { id, username, role, userAgent, ipAddress })
-        .pipe(handleRpcError()),
-    );
-    setRefreshTokenCookie(res, tokens.refreshToken);
-
-    return { accessToken: tokens.accessToken };
-  }
-
-  @Get('github')
-  @UseGuards(GithubAuthGuard)
-  async githubLogin() {}
-
-  @Get('github/callback')
-  @UseGuards(GithubAuthGuard)
-  async githubCallback(
-    @CurrentUser() user: UserWithoutPassword,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const { userAgent, ipAddress } = extractRequestMeta(req);
-    const { id, username, role } = user;
-
-    const tokens = await lastValueFrom<LoginResponse>(
-      this.authServiceClient
-        .send('login', { id, username, role, userAgent, ipAddress })
-        .pipe(handleRpcError()),
-    );
-    setRefreshTokenCookie(res, tokens.refreshToken);
-
-    return { accessToken: tokens.accessToken };
   }
 }

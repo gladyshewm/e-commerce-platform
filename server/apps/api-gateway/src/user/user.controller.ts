@@ -17,7 +17,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { USER_SERVICE } from '@app/common/constants';
-import { User, UserWithoutPassword } from '@app/common/contracts/user';
+import { UserWithoutPassword } from '@app/common/contracts/user';
 import { UserRole } from '@app/common/database/enums';
 import { GetUserResponseDto } from './dto/user-get-response.dto';
 import { GetUserDto } from './dto/user-get.dto';
@@ -25,6 +25,7 @@ import { UpdateUserRoleDto } from './dto/user-update-role.dto';
 import { JwtAuthGuard, RolesGuard } from '../common/guards';
 import { CurrentUser, Roles } from '../common/decorators';
 import { handleRpcError } from '../common/utils';
+import { AuthenticatedUser } from '../common/types';
 
 @ApiTags('users')
 @Throttle({ default: { ttl: seconds(60), limit: 100 } })
@@ -44,7 +45,7 @@ export class UserController {
   })
   @ApiBearerAuth()
   async getMe(
-    @CurrentUser() user: Pick<User, 'id' | 'username'>,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<GetUserResponseDto> {
     return lastValueFrom<UserWithoutPassword>(
       this.userServiceClient

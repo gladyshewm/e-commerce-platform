@@ -32,11 +32,11 @@ import { GetProductsQueryDto } from './dto/product-get.dto';
 import { ReviewDto } from './dto/review.dto';
 import { CreateReviewDto } from './dto/review-create.dto';
 import { PRODUCT_SERVICE } from '@app/common/constants';
-import { User } from '@app/common/contracts/user';
 import { UserRole } from '@app/common/database/enums';
 import { handleRpcError } from '../common/utils';
 import { JwtAuthGuard, RolesGuard } from '../common/guards';
 import { CurrentUser, Roles } from '../common/decorators';
+import { AuthenticatedUser } from '../common/types';
 
 @ApiTags('products')
 @Controller('products')
@@ -299,7 +299,7 @@ export class ProductController {
   async createReview(
     @Param('id') id: number,
     @Body() dto: CreateReviewDto,
-    @CurrentUser() user: Pick<User, 'id' | 'username'>,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReviewDto> {
     return lastValueFrom<Review>(
       this.productServiceClient
@@ -326,7 +326,7 @@ export class ProductController {
   async deleteReview(
     @Param('productId') productId: number,
     @Param('reviewId') reviewId: number,
-    @CurrentUser() user: Pick<User, 'id' | 'username'>,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<ReviewDto> {
     return lastValueFrom<Review>(
       this.productServiceClient
