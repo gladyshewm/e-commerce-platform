@@ -1,9 +1,10 @@
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import {
+  ActivateUserEmailPayload,
   CreateUserOAuthPayload,
   CreateUserPayload,
   GetUserByEmailPayload,
@@ -11,12 +12,15 @@ import {
   GetUserByNamePayload,
   GetUserByOAuthPayload,
   LinkUserWithOAuthPayload,
+  SendEmailActivationPayload,
   UpdateUserRolePayload,
   User,
   UserWithOAuth,
   UserWithoutPassword,
 } from '@app/common/contracts/user';
 import { UserEntity, UserOAuthEntity } from '@app/common/database/entities';
+import { NOTIFICATION_SERVICE } from '@app/common/constants';
+import { EmailVerificationService } from './email-verification.service';
 
 @Injectable()
 export class UserService {
@@ -27,6 +31,9 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(UserOAuthEntity)
     private readonly oauthRepository: Repository<UserOAuthEntity>,
+    @Inject(NOTIFICATION_SERVICE)
+    private readonly notificationServiceClient: ClientProxy,
+    private readonly emailVerificationService: EmailVerificationService,
   ) {}
 
   async createUser(payload: CreateUserPayload): Promise<UserWithoutPassword> {
@@ -57,7 +64,45 @@ export class UserService {
       `User with username ${saved.username} has been successfully created`,
     );
 
+    // TODO: либо просто notificationServiceClient.emit без лишних проверок
+    this.sendEmailActivationLink({ email: user.email }).catch((error) => {
+      this.logger.error(
+        `Failed to send email activation link for user ${user.email}: ${error.message}`,
+      );
+    });
+
     return saved;
+  }
+
+  async sendEmailActivationLink(
+    payload: SendEmailActivationPayload,
+  ): Promise<void> {
+    const { email } = payload;
+    const user = await this.getUserByEmail({ email });
+
+    if (user.isEmailVerified) {
+      this.logger.error(
+        `Email of the user with ID ${user.id} is already verified`,
+      );
+      throw new RpcException({
+        message: `Email of the user with ID ${user.id} is already verified`,
+        statusCode: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    const token = await this.emailVerificationService.createToken(user.id);
+
+    this.notificationServiceClient
+      .emit('send_email_activation_link', {
+        userId: user.id,
+        username: user.username,
+        token,
+      })
+      .subscribe();
+  }
+
+  async activateUserEmail(payload: ActivateUserEmailPayload): Promise<void> {
+    await this.emailVerificationService.activateEmail(payload.token);
   }
 
   async getUserById(payload: GetUserByIdPayload): Promise<UserWithoutPassword> {

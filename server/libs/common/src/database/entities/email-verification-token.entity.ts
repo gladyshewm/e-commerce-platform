@@ -7,13 +7,13 @@ import {
 } from 'typeorm';
 import { UserEntity } from './user.entity';
 
-@Entity('tokens')
-export class TokenEntity {
+@Entity('email_verification_tokens')
+export class EmailVerificationTokenEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  refreshToken: string;
+  @Column()
+  token: string;
 
   @Column()
   expiresAt: Date;
@@ -21,12 +21,6 @@ export class TokenEntity {
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ nullable: true })
-  userAgent?: string;
-
-  @Column({ nullable: true })
-  ipAddress?: string;
-
-  @ManyToOne(() => UserEntity, (user) => user.tokens, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE' })
   user: UserEntity;
 }

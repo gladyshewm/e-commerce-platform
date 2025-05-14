@@ -5,6 +5,8 @@ import {
   Inject,
   Param,
   Patch,
+  Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -26,6 +28,10 @@ import { JwtAuthGuard, RolesGuard } from '../common/guards';
 import { CurrentUser, Roles } from '../common/decorators';
 import { handleRpcError } from '../common/utils';
 import { AuthenticatedUser } from '../common/types';
+import { ActivateUserEmailQueryDto } from './dto/user-activate-email.dto';
+import { ActivateUserEmailResponseDto } from './dto/user-activate-email-response.dto';
+import { SendEmailActivationLinkDto } from './dto/user-send-email-activation-link.dto';
+import { SendEmailActivationLinkResponseDto } from './dto/user-send-email-activation-link-response.dto';
 
 @ApiTags('users')
 @Throttle({ default: { ttl: seconds(60), limit: 100 } })
@@ -34,6 +40,53 @@ export class UserController {
   constructor(
     @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
   ) {}
+
+  @Get('activate')
+  @ApiResponse({
+    status: 200,
+    type: ActivateUserEmailResponseDto,
+    description: 'Email has been successfully activated',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Email verification token is invalid or expired',
+  })
+  async activateUserEmail(
+    @Query() query: ActivateUserEmailQueryDto,
+  ): Promise<ActivateUserEmailResponseDto> {
+    await lastValueFrom(
+      this.userServiceClient
+        .send('activate_user_email', query)
+        .pipe(handleRpcError()),
+    );
+
+    return { message: 'Email has been successfully activated' };
+  }
+
+  // если прошлый link истёк
+  @Post('email-activation-link')
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    status: 201,
+    type: SendEmailActivationLinkResponseDto,
+    description: 'Activation email link has been successfully sent',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'This email is already verified',
+  })
+  @ApiBearerAuth()
+  async sendEmailActivationLink(
+    @Body() dto: SendEmailActivationLinkDto, // TODO: или доставать из req.user?
+  ): Promise<SendEmailActivationLinkResponseDto> {
+    await lastValueFrom(
+      this.userServiceClient
+        .send('send_email_activation_link', dto)
+        .pipe(handleRpcError()),
+    );
+
+    return { message: 'Activation email link has been successfully sent' };
+  }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)

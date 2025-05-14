@@ -4,9 +4,15 @@ import { UserService } from './user.service';
 import { ConfigModule } from '@nestjs/config';
 import { RmqModule } from '@app/rmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity, UserOAuthEntity } from '@app/common/database/entities';
+import {
+  EmailVerificationTokenEntity,
+  UserEntity,
+  UserOAuthEntity,
+} from '@app/common/database/entities';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import * as Joi from 'joi';
+import { NOTIFICATION_SERVICE } from '@app/common/constants';
+import { EmailVerificationService } from './email-verification.service';
 
 @Module({
   imports: [
@@ -16,6 +22,7 @@ import * as Joi from 'joi';
       validationSchema: Joi.object({
         RMQ_URI: Joi.string().required(),
         RMQ_USER_QUEUE: Joi.string().required(),
+        RMQ_NOTIFICATION_QUEUE: Joi.string().required(),
         POSTGRES_HOST: Joi.string().required(),
         POSTGRES_PORT: Joi.number().required(),
         POSTGRES_USER: Joi.string().required(),
@@ -24,10 +31,15 @@ import * as Joi from 'joi';
       }),
     }),
     TypeOrmConfigModule,
-    TypeOrmModule.forFeature([UserEntity, UserOAuthEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      UserOAuthEntity,
+      EmailVerificationTokenEntity,
+    ]),
     RmqModule,
+    RmqModule.register({ name: NOTIFICATION_SERVICE }),
   ],
   controllers: [UserController],
-  providers: [Logger, UserService],
+  providers: [Logger, UserService, EmailVerificationService],
 })
 export class UserModule {}

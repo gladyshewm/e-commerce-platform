@@ -11,6 +11,8 @@ import {
   LoginResponse,
   LogoutPayload,
   RefreshPayload,
+  RegisterPayload,
+  RegisterResponse,
   ValidateUserOAuthPayload,
   ValidateUserPayload,
   ValidateUserResponse,
@@ -98,6 +100,67 @@ describe('AuthService', () => {
     it('should return user without password', () => {
       const { password, ...rest } = user;
       expect(result).toEqual(rest);
+    });
+  });
+
+  describe('register', () => {
+    let result: RegisterResponse;
+    const payload: RegisterPayload = {
+      username: 'test',
+      email: 'test',
+      password: 'test',
+      ipAddress: '127.0.0.1',
+      userAgent: 'test',
+    };
+    const tokens: LoginResponse = {
+      accessToken: 'access',
+      refreshToken: 'refresh',
+    };
+    const user = {
+      id: 1,
+      username: 'test',
+      email: 'test',
+    } as UserWithoutPassword;
+    let loginSpy: jest.SpyInstance;
+
+    beforeEach(async () => {
+      loginSpy = jest.spyOn(authService, 'login').mockResolvedValue(tokens);
+      userServiceClient.send.mockReturnValue(of(user));
+    });
+
+    it('should create user', async () => {
+      const { ipAddress, userAgent, ...credentials } = payload;
+      await authService.register(payload);
+
+      expect(userServiceClient.send).toHaveBeenCalledWith(
+        'create_user',
+        credentials,
+      );
+    });
+
+    it('should throw RpcException if userServiceClient throws', async () => {
+      userServiceClient.send.mockReturnValue(
+        throwError(() => new RpcException('Failed')),
+      );
+
+      await expect(authService.register(payload)).rejects.toThrow(RpcException);
+      expect(authService.login).not.toHaveBeenCalled();
+    });
+
+    it('should login created user', async () => {
+      await authService.register(payload);
+      const { ipAddress, userAgent } = payload;
+
+      expect(loginSpy).toHaveBeenCalledWith({
+        ...user,
+        ipAddress,
+        userAgent,
+      });
+    });
+
+    it('should return created user and tokens', async () => {
+      result = await authService.register(payload);
+      expect(result).toEqual({ user, ...tokens });
     });
   });
 

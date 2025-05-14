@@ -2,7 +2,8 @@ import { Controller } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { BaseRpcController, RmqService } from '@app/rmq';
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
-import { NotifyUserDto } from './dto/notification-notify-user.dto';
+import { NotifyOrderDto } from './dto/notification-notify-order.dto';
+import { SendEmailActivationLinkDto } from './dto/notification-send-email-activation-link.dto';
 
 @Controller()
 export class NotificationController extends BaseRpcController {
@@ -13,9 +14,19 @@ export class NotificationController extends BaseRpcController {
     super(rmqService);
   }
 
+  @EventPattern('send_email_activation_link')
+  async handleSendEmailActivationLink(
+    @Payload() payload: SendEmailActivationLinkDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    await this.handleMessage(ctx, () =>
+      this.notificationService.sendEmailActivationLink(payload),
+    );
+  }
+
   @EventPattern('order_created')
   async handleOrderCreated(
-    @Payload() payload: NotifyUserDto,
+    @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,
   ) {
     await this.handleMessage(ctx, () =>
@@ -25,7 +36,7 @@ export class NotificationController extends BaseRpcController {
 
   @EventPattern('delivery_scheduled')
   async handleDeliveryScheduled(
-    @Payload() payload: NotifyUserDto,
+    @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,
   ) {
     await this.handleMessage(ctx, () =>
@@ -35,7 +46,7 @@ export class NotificationController extends BaseRpcController {
 
   @EventPattern('delivery_started')
   async handleDeliveryStarted(
-    @Payload() payload: NotifyUserDto,
+    @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,
   ) {
     await this.handleMessage(ctx, () =>
@@ -45,7 +56,7 @@ export class NotificationController extends BaseRpcController {
 
   @EventPattern('delivery_completed')
   async handleDeliveryCompleted(
-    @Payload() payload: NotifyUserDto,
+    @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,
   ) {
     await this.handleMessage(ctx, () =>

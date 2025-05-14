@@ -2,9 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RmqService } from '@app/rmq';
-import { USER_SERVICE } from '@app/common/constants';
-import { of } from 'rxjs';
-import { ClientProxy, RmqContext } from '@nestjs/microservices';
+import { RmqContext } from '@nestjs/microservices';
 import {
   LoginResponse,
   RegisterResponse,
@@ -25,7 +23,6 @@ describe('AuthController', () => {
   let authController: AuthController;
   let authService: jest.Mocked<AuthService>;
   let rmqService: jest.Mocked<RmqService>;
-  let userServiceClient: jest.Mocked<ClientProxy>;
   let ctx: RmqContext;
 
   beforeEach(async () => {
@@ -39,20 +36,12 @@ describe('AuthController', () => {
             ack: jest.fn(),
           },
         },
-        {
-          provide: USER_SERVICE,
-          useValue: {
-            send: jest.fn().mockReturnValue(of({})),
-            pipe: jest.fn().mockReturnValue(of({})),
-          },
-        },
       ],
     }).compile();
 
     authController = app.get<AuthController>(AuthController);
     authService = app.get<jest.Mocked<AuthService>>(AuthService);
     rmqService = app.get<jest.Mocked<RmqService>>(RmqService);
-    userServiceClient = app.get<jest.Mocked<ClientProxy>>(USER_SERVICE);
     ctx = {} as RmqContext;
   });
 
@@ -112,25 +101,12 @@ describe('AuthController', () => {
     };
 
     beforeEach(async () => {
-      userServiceClient.send.mockReturnValue(of(user));
-      authService.login.mockResolvedValue(loginResponse);
+      authService.register.mockResolvedValue({ user, ...loginResponse });
       result = await authController.register(payload, ctx);
     });
 
-    it('should call userServiceClient', () => {
-      const { ipAddress, userAgent, ...credentials } = payload;
-      expect(userServiceClient.send).toHaveBeenCalledWith(
-        'create_user',
-        credentials,
-      );
-    });
-
     it('should call authService', () => {
-      expect(authService.login).toHaveBeenCalledWith({
-        ...user,
-        ipAddress: payload.ipAddress,
-        userAgent: payload.userAgent,
-      });
+      expect(authService.register).toHaveBeenCalledWith(payload);
     });
 
     it('should return user with tokens', () => {

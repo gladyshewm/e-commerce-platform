@@ -17,6 +17,8 @@ import { GetUserByOAuthDto } from './dto/user-get-by-oauth.dto';
 import { GetUserByEmailDto } from './dto/user-get-by-email.dto';
 import { LinkUserWithOAuthDto } from './dto/user-link-with-oauth.dto';
 import { CreateUserOAuthDto } from './dto/user-create-oauth.dto';
+import { SendEmailActivationLinkDto } from './dto/user-send-email-activation-link.dto';
+import { ActivateUserEmailDto } from './dto/user-activate-email.dto';
 
 jest.mock('./user.service');
 
@@ -75,6 +77,54 @@ describe('UserController', () => {
 
     it('should return user', () => {
       expect(result).toEqual(user);
+    });
+
+    it('should call ack', () => {
+      expect(rmqService.ack).toHaveBeenCalledTimes(1);
+      expect(rmqService.ack).toHaveBeenCalledWith(ctx);
+    });
+  });
+
+  describe('sendEmailActivationLink', () => {
+    let result: { success: boolean };
+    const payload: SendEmailActivationLinkDto = {
+      email: 'email',
+    };
+
+    beforeEach(async () => {
+      result = await userController.sendEmailActivationLink(payload, ctx);
+    });
+
+    it('should call userService', () => {
+      expect(userService.sendEmailActivationLink).toHaveBeenCalledWith(payload);
+    });
+
+    it('should return success', () => {
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should call ack', () => {
+      expect(rmqService.ack).toHaveBeenCalledTimes(1);
+      expect(rmqService.ack).toHaveBeenCalledWith(ctx);
+    });
+  });
+
+  describe('activateUserEmail', () => {
+    let result: { success: boolean };
+    const payload: ActivateUserEmailDto = {
+      token: 'token',
+    };
+
+    beforeEach(async () => {
+      result = await userController.activateUserEmail(payload, ctx);
+    });
+
+    it('should call userService', () => {
+      expect(userService.activateUserEmail).toHaveBeenCalledWith(payload);
+    });
+
+    it('should return success', () => {
+      expect(result).toEqual({ success: true });
     });
 
     it('should call ack', () => {

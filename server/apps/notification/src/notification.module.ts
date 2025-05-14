@@ -16,6 +16,7 @@ import { USER_SERVICE } from '@app/common/constants';
       isGlobal: true,
       envFilePath: './apps/notification/.env',
       validationSchema: Joi.object({
+        API_URL: Joi.string().required(),
         RMQ_URI: Joi.string().required(),
         RMQ_NOTIFICATION_QUEUE: Joi.string().required(),
         RMQ_USER_QUEUE: Joi.string().required(),

@@ -15,6 +15,8 @@ import { GetUserByOAuthDto } from './dto/user-get-by-oauth.dto';
 import { LinkUserWithOAuthDto } from './dto/user-link-with-oauth.dto';
 import { CreateUserOAuthDto } from './dto/user-create-oauth.dto';
 import { GetUserByEmailDto } from './dto/user-get-by-email.dto';
+import { ActivateUserEmailDto } from './dto/user-activate-email.dto';
+import { SendEmailActivationLinkDto } from './dto/user-send-email-activation-link.dto';
 
 @Controller()
 export class UserController extends BaseRpcController {
@@ -28,6 +30,30 @@ export class UserController extends BaseRpcController {
   @MessagePattern('create_user')
   async createUser(@Payload() payload: CreateUserDto, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () => this.userService.createUser(payload));
+  }
+
+  @MessagePattern('send_email_activation_link')
+  async sendEmailActivationLink(
+    @Payload() payload: SendEmailActivationLinkDto,
+    @Ctx() ctx: RmqContext,
+  ): Promise<{ success: boolean }> {
+    await this.handleMessage(ctx, () =>
+      this.userService.sendEmailActivationLink(payload),
+    );
+
+    return { success: true };
+  }
+
+  @MessagePattern('activate_user_email')
+  async activateUserEmail(
+    @Payload() payload: ActivateUserEmailDto,
+    @Ctx() ctx: RmqContext,
+  ): Promise<{ success: boolean }> {
+    await this.handleMessage(ctx, () =>
+      this.userService.activateUserEmail(payload),
+    );
+
+    return { success: true };
   }
 
   @MessagePattern('get_user_by_id')

@@ -8,3 +8,5 @@ export * from './user-get-by-oauth.interface';
 export * from './user-link-with-oauth.interface';
 export * from './user-create-oauth.interface';
 export * from './user-get-by-email.interface';
+export * from './user-activate-email.interface';
+export * from './user-send-email-activation-link.interface';

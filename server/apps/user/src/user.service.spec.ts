@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { Repository } from 'typeorm';
+import { of } from 'rxjs';
 import { UserEntity, UserOAuthEntity } from '@app/common/database/entities';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
+  ActivateUserEmailPayload,
   CreateUserOAuthPayload,
   CreateUserPayload,
   GetUserByEmailPayload,
@@ -11,27 +13,34 @@ import {
   GetUserByNamePayload,
   GetUserByOAuthPayload,
   LinkUserWithOAuthPayload,
+  SendEmailActivationPayload,
   UpdateUserRolePayload,
   User,
   UserWithOAuth,
   UserWithoutPassword,
 } from '@app/common/contracts/user';
-import { RpcException } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserRole } from '@app/common/database/enums';
+import { NOTIFICATION_SERVICE } from '@app/common/constants';
+import { EmailVerificationService } from './email-verification.service';
 
+jest.mock('./email-verification.service');
 jest.mock('bcrypt', () => ({
   hash: jest.fn().mockResolvedValue('hashedPassword'),
 }));
 
 describe('UserService', () => {
-  let userService: jest.Mocked<UserService>;
+  let userService: UserService;
+  let emailVerificationService: jest.Mocked<EmailVerificationService>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
   let oauthRepository: jest.Mocked<Repository<UserOAuthEntity>>;
+  let notificationServiceClient: jest.Mocked<ClientProxy>;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
+        EmailVerificationService,
         {
           provide: getRepositoryToken(UserEntity),
           useValue: {
@@ -52,16 +61,28 @@ describe('UserService', () => {
             findOneBy: jest.fn(),
           },
         },
+        {
+          provide: NOTIFICATION_SERVICE,
+          useValue: {
+            emit: jest.fn().mockReturnValue(of({})),
+            subscribe: jest.fn().mockReturnValue(of({})),
+          },
+        },
       ],
     }).compile();
 
-    userService = app.get<jest.Mocked<UserService>>(UserService);
+    userService = app.get<UserService>(UserService);
+    emailVerificationService = app.get<jest.Mocked<EmailVerificationService>>(
+      EmailVerificationService,
+    );
     userRepository = app.get<jest.Mocked<Repository<UserEntity>>>(
       getRepositoryToken(UserEntity),
     );
     oauthRepository = app.get<jest.Mocked<Repository<UserOAuthEntity>>>(
       getRepositoryToken(UserOAuthEntity),
     );
+    notificationServiceClient =
+      app.get<jest.Mocked<ClientProxy>>(NOTIFICATION_SERVICE);
   });
 
   describe('root', () => {
@@ -83,8 +104,12 @@ describe('UserService', () => {
       email: payload.email,
       password: 'hashedPassword',
     } as UserEntity;
+    let sendEmailActivationLinkSpy: jest.SpyInstance;
 
     beforeEach(async () => {
+      sendEmailActivationLinkSpy = jest
+        .spyOn(userService, 'sendEmailActivationLink')
+        .mockResolvedValue();
       userRepository.create.mockReturnValue(user);
       userRepository.save.mockResolvedValue(user);
       result = await userService.createUser(payload);
@@ -118,12 +143,84 @@ describe('UserService', () => {
       });
     });
 
+    it('should send email activation link', () => {
+      expect(sendEmailActivationLinkSpy).toHaveBeenCalledWith({
+        email: user.email,
+      });
+    });
+
     it('should return created user without password', () => {
       expect(result).toEqual({
         id: user.id,
         username: user.username,
         email: user.email,
       });
+    });
+  });
+
+  describe('sendEmailActivationLink', () => {
+    const payload: SendEmailActivationPayload = { email: 'email' };
+    const user = {
+      id: 1,
+      username: 'username',
+      email: payload.email,
+      isEmailVerified: false,
+    } as UserWithoutPassword;
+    const emailVerificationToken = 'email-verification-token';
+    let getUserByEmailSpy: jest.SpyInstance;
+
+    beforeEach(async () => {
+      getUserByEmailSpy = jest
+        .spyOn(userService, 'getUserByEmail')
+        .mockResolvedValue(user);
+      emailVerificationService.createToken.mockResolvedValue(
+        emailVerificationToken,
+      );
+      await userService.sendEmailActivationLink(payload);
+    });
+
+    it('should get user', () => {
+      expect(getUserByEmailSpy).toHaveBeenCalledWith(payload);
+    });
+
+    it('should throw RpcException if user email already verified', async () => {
+      getUserByEmailSpy.mockResolvedValueOnce({
+        ...user,
+        isEmailVerified: true,
+      });
+      await expect(
+        userService.sendEmailActivationLink(payload),
+      ).rejects.toThrow(RpcException);
+    });
+
+    it('should get email verification token', () => {
+      expect(emailVerificationService.createToken).toHaveBeenCalledWith(
+        user.id,
+      );
+    });
+
+    it('should send email activation link', () => {
+      expect(notificationServiceClient.emit).toHaveBeenCalledWith(
+        'send_email_activation_link',
+        {
+          userId: user.id,
+          username: user.username,
+          token: emailVerificationToken,
+        },
+      );
+    });
+  });
+
+  describe('activateUserEmail', () => {
+    const payload: ActivateUserEmailPayload = {
+      token: 'email-verification-token',
+    };
+
+    it('should call emailVerificationService', async () => {
+      await userService.activateUserEmail(payload);
+      expect(emailVerificationService.activateEmail).toHaveBeenCalledWith(
+        payload.token,
+      );
     });
   });
 

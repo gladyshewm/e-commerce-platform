@@ -1,12 +1,10 @@
-import { Controller, Inject } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
-  ClientProxy,
   Ctx,
   MessagePattern,
   Payload,
   RmqContext,
-  RpcException,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
 import {
@@ -15,9 +13,6 @@ import {
   ValidateUserPayload,
   ValidateUserResponse,
 } from '@app/common/contracts/auth';
-import { UserWithoutPassword } from '@app/common/contracts/user';
-import { USER_SERVICE } from '@app/common/constants';
-import { catchError, lastValueFrom } from 'rxjs';
 import { RegisterDto } from './dto/auth-register.dto';
 import { LoginDto } from './dto/auth-login.dto';
 import { RefreshDto } from './dto/auth-refresh.dto';
@@ -29,7 +24,6 @@ export class AuthController extends BaseRpcController {
   constructor(
     private readonly authService: AuthService,
     readonly rmqService: RmqService,
-    @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
   ) {
     super(rmqService);
   }
@@ -49,32 +43,7 @@ export class AuthController extends BaseRpcController {
     @Payload() payload: RegisterDto,
     @Ctx() ctx: RmqContext,
   ): Promise<RegisterResponse> {
-    return this.handleMessage(ctx, async () => {
-      const { ipAddress, userAgent, ...credentials } = payload;
-
-      const user = await lastValueFrom<UserWithoutPassword>(
-        this.userServiceClient.send('create_user', credentials).pipe(
-          catchError((error) => {
-            throw new RpcException({
-              message: error.message,
-              statusCode: error.statusCode,
-            });
-          }),
-        ),
-      );
-
-      const tokens = await this.authService.login({
-        ...user,
-        ipAddress,
-        userAgent,
-      });
-
-      return {
-        user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      };
-    });
+    return this.handleMessage(ctx, () => this.authService.register(payload));
   }
 
   @MessagePattern('login')

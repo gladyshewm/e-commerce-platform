@@ -2,6 +2,7 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { catchError, lastValueFrom } from 'rxjs';
 import { NotificationEntity } from '@app/common/database/entities';
@@ -12,6 +13,7 @@ import {
 import {
   Notification,
   OrderCreatedPayload,
+  SendEmailActivationLinkPayload,
 } from '@app/common/contracts/notification';
 import { USER_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
@@ -25,12 +27,37 @@ export class NotificationService {
   constructor(
     @InjectRepository(NotificationEntity)
     private readonly notificationRepository: Repository<NotificationEntity>,
-    private readonly mailerService: MailerService,
     @Inject(USER_SERVICE)
     private readonly userServiceClient: ClientProxy,
+    private readonly mailerService: MailerService,
+    private readonly configService: ConfigService,
   ) {}
 
-  async notifyUserOrderCreated(payload: OrderCreatedPayload) {
+  private getEmailActivationLink(url: string, token: string): string {
+    return `${url}/users/activate?token=${token}`;
+  }
+
+  async sendEmailActivationLink(
+    payload: SendEmailActivationLinkPayload,
+  ): Promise<void> {
+    const { userId, username, token } = payload;
+    const url = this.configService.get<string>('API_URL'); // FIXME: replace with FRONTEND_URL
+    const activationLink = this.getEmailActivationLink(url, token);
+    const content = `
+      Hello, ${username}!\n
+      Follow the link below to activate your account.\n
+      ${activationLink}\n
+      This link will expire in 24 hours.
+    `;
+    const subject = 'Account Activation';
+    await this.sendNotification({
+      userId: userId,
+      content,
+      subject,
+    });
+  }
+
+  async notifyUserOrderCreated(payload: OrderCreatedPayload): Promise<void> {
     const content = `Order №${payload.orderId} has been successfully created`;
     const subject = 'Order Created';
     await this.sendNotification({
@@ -40,7 +67,9 @@ export class NotificationService {
     });
   }
 
-  async notifyUserDeliveryScheduled(payload: OrderCreatedPayload) {
+  async notifyUserDeliveryScheduled(
+    payload: OrderCreatedPayload,
+  ): Promise<void> {
     const content = `Delivery for order with №${payload.orderId} has been scheduled`;
     const subject = 'Delivery Scheduled';
     await this.sendNotification({
@@ -50,7 +79,7 @@ export class NotificationService {
     });
   }
 
-  async notifyUserDeliveryStarted(payload: OrderCreatedPayload) {
+  async notifyUserDeliveryStarted(payload: OrderCreatedPayload): Promise<void> {
     const content = `Delivery for order with №${payload.orderId} has been started`;
     const subject = 'Delivery Started';
     await this.sendNotification({
@@ -60,7 +89,9 @@ export class NotificationService {
     });
   }
 
-  async notifyUserDeliveryCompleted(payload: OrderCreatedPayload) {
+  async notifyUserDeliveryCompleted(
+    payload: OrderCreatedPayload,
+  ): Promise<void> {
     const content = `Your order with №${payload.orderId} has been delivered!`;
     const subject = 'Delivery Completed';
     await this.sendNotification({
@@ -70,7 +101,7 @@ export class NotificationService {
     });
   }
 
-  private async sendNotification(payload: SendNotification) {
+  private async sendNotification(payload: SendNotification): Promise<void> {
     const { userId, content, subject } = payload;
     const notification = this.notificationRepository.create({
       type: NotificationType.EMAIL,
@@ -92,7 +123,7 @@ export class NotificationService {
       await this.updateNotificationStatus(saved.id, NotificationStatus.SENT);
 
       this.logger.log(
-        `Notification ${saved.id} for the user with ID ${payload.userId} about the order creation has been sent`,
+        `Notification ${saved.id} for the user with ID ${payload.userId} has been sent`,
       );
     } catch (error) {
       this.logger.error(
@@ -140,7 +171,7 @@ export class NotificationService {
     const saved = await this.notificationRepository.save(notification);
 
     this.logger.log(
-      `Notification with id ${notificationId} updated from ${existingStatus.toUpperCase()} to ${status.toUpperCase()}`,
+      `Notification with ID ${notificationId} status updated from ${existingStatus.toUpperCase()} to ${status.toUpperCase()}`,
     );
 
     return {

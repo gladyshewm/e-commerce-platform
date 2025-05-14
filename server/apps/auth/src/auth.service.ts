@@ -11,6 +11,8 @@ import {
   LogoutPayload,
   RefreshPayload,
   ValidateUserOAuthPayload,
+  RegisterPayload,
+  RegisterResponse,
 } from '@app/common/contracts/auth';
 import {
   User,
@@ -24,8 +26,8 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
-    @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
     private readonly tokenService: TokenService,
+    @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
   ) {}
 
   async validateUser(
@@ -59,6 +61,34 @@ export class AuthService {
 
     const { password: _, ...result } = user;
     return result;
+  }
+
+  async register(payload: RegisterPayload): Promise<RegisterResponse> {
+    const { ipAddress, userAgent, ...credentials } = payload;
+    const user = await lastValueFrom(
+      this.userServiceClient
+        .send<UserWithoutPassword>('create_user', credentials)
+        .pipe(
+          catchError((error) => {
+            throw new RpcException({
+              message: error.message,
+              statusCode: error.statusCode,
+            });
+          }),
+        ),
+    );
+
+    const tokens = await this.login({
+      ...user,
+      ipAddress,
+      userAgent,
+    });
+
+    return {
+      user,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
   async login(loginPayload: LoginPayload): Promise<LoginResponse> {
