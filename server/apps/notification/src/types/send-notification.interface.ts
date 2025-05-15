@@ -1,5 +1,5 @@
-export interface SendNotification {
+export interface SendNotificationPayload {
   userId: number;
-  content: string;
   subject: string;
+  content: string;
 }

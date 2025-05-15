@@ -4,11 +4,18 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailerModule } from '@nestjs-modules/mailer';
 import * as Joi from 'joi';
 import { NotificationController } from './notification.controller';
-import { NotificationService } from './notification.service';
+import { NotificationService } from './services/notification.service';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import { RmqModule } from '@app/rmq';
 import { NotificationEntity } from '@app/common/database/entities';
 import { USER_SERVICE } from '@app/common/constants';
+import { EMAIL_SENDER } from './constants/senders-tokens';
+import {
+  NotificationContentService,
+  NotificationDispatcherService,
+  NotificationProcessorService,
+} from './services';
+import { EmailNotificationSender } from './services/senders';
 
 @Module({
   imports: [
@@ -55,6 +62,16 @@ import { USER_SERVICE } from '@app/common/constants';
     RmqModule.register({ name: USER_SERVICE }),
   ],
   controllers: [NotificationController],
-  providers: [Logger, NotificationService],
+  providers: [
+    Logger,
+    NotificationService,
+    NotificationProcessorService,
+    NotificationContentService,
+    NotificationDispatcherService,
+    {
+      provide: EMAIL_SENDER,
+      useClass: EmailNotificationSender,
+    },
+  ],
 })
 export class NotificationModule {}

@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
-import { NotificationService } from './notification.service';
 import { BaseRpcController, RmqService } from '@app/rmq';
 import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
+import { NotificationService } from './services';
 import { NotifyOrderDto } from './dto/notification-notify-order.dto';
 import { SendEmailActivationLinkDto } from './dto/notification-send-email-activation-link.dto';
 

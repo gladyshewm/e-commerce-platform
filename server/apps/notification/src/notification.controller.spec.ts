@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RmqContext } from '@nestjs/microservices';
 import { NotificationController } from './notification.controller';
-import { NotificationService } from './notification.service';
 import { RmqService } from '@app/rmq';
+import { NotificationService } from './services';
 
-jest.mock('./notification.service');
+jest.mock('./services');
 
 describe('NotificationController', () => {
   let notificationController: NotificationController;
