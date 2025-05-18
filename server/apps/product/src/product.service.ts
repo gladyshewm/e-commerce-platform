@@ -149,7 +149,7 @@ export class ProductService {
 
     if (!product) {
       this.logger.error(
-        `Failed to update product.inventory: Product with id ${productId} not found`,
+        `Failed to update inventory: Product with id ${productId} not found`,
       );
       throw new RpcException({
         message: `Product with id ${productId} not found`,
@@ -160,9 +160,7 @@ export class ProductService {
     await this.productRepository.update(productId, {
       inventory: { id: inventoryId },
     });
-    this.logger.log(
-      `Updated product.inventory for product with id ${productId}`,
-    );
+    this.logger.log(`Updated inventory for product with id ${productId}`);
   }
 
   async updateProduct(

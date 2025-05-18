@@ -3,6 +3,7 @@ import { DataSource, Repository } from 'typeorm';
 import { InventoryEntity } from '@app/common/database/entities';
 import {
   AddStockPayload,
+  GetInventoryByProductIdPayload,
   Inventory,
   ProductCreatedPayload,
 } from '@app/common/contracts/inventory';
@@ -30,7 +31,7 @@ export class InventoryService {
 
       if (exists) {
         throw new RpcException({
-          message: `Inventory for product with id ${payload.productId} already exists`,
+          message: `Inventory for product with ID ${payload.productId} already exists`,
           statusCode: HttpStatus.CONFLICT,
         });
       }
@@ -41,7 +42,7 @@ export class InventoryService {
       await this.inventoryRepository.save(inventory);
 
       this.logger.log(
-        `Created inventory for product with id ${payload.productId}`,
+        `Created inventory for product with ID ${payload.productId}`,
       );
 
       this.productServiceClient
@@ -63,6 +64,44 @@ export class InventoryService {
     }
   }
 
+  // TODO: add pagination (queryBuilder)
+  async getInventories(): Promise<Inventory[]> {
+    try {
+      const inventories = await this.inventoryRepository.find({
+        relations: ['product'],
+      });
+      return inventories.map((inventory) => ({
+        id: inventory.id,
+        availableQuantity: inventory.availableQuantity,
+        reservedQuantity: inventory.reservedQuantity,
+        updatedAt: inventory.updatedAt,
+        productId: inventory.product.id,
+      }));
+    } catch (error) {
+      this.logger.error(
+        `Failed to get inventories: ${error.message}`,
+        error.stack,
+      );
+      throw new RpcException({
+        message: `Failed to get inventories: ${error.message}`,
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
+  }
+
+  async getInventoryByProductId(
+    payload: GetInventoryByProductIdPayload,
+  ): Promise<Inventory> {
+    const inventory = await this.findInventoryById(payload.productId);
+    return {
+      id: inventory.id,
+      availableQuantity: inventory.availableQuantity,
+      reservedQuantity: inventory.reservedQuantity,
+      updatedAt: inventory.updatedAt,
+      productId: inventory.product.id,
+    };
+  }
+
   async addStock(payload: AddStockPayload): Promise<Inventory> {
     const inventory = await this.inventoryRepository.findOne({
       where: { product: { id: payload.productId } },
@@ -71,10 +110,10 @@ export class InventoryService {
 
     if (!inventory) {
       this.logger.error(
-        `Inventory for product with id ${payload.productId} not found`,
+        `Inventory for product with ID ${payload.productId} not found`,
       );
       throw new RpcException({
-        message: `Inventory for product with id ${payload.productId} not found`,
+        message: `Inventory for product with ID ${payload.productId} not found`,
         statusCode: HttpStatus.NOT_FOUND,
       });
     }
@@ -82,7 +121,7 @@ export class InventoryService {
     inventory.availableQuantity += payload.quantity;
     const updatedInventory = await this.inventoryRepository.save(inventory);
     this.logger.log(
-      `Added ${payload.quantity} items in stock to inventory for product with id ${payload.productId}`,
+      `Added ${payload.quantity} items in stock to inventory for product with ID ${payload.productId}`,
     );
 
     return {
@@ -101,9 +140,9 @@ export class InventoryService {
     });
 
     if (!inventory) {
-      this.logger.error(`Inventory for product with id ${productId} not found`);
+      this.logger.error(`Inventory for product with ID ${productId} not found`);
       throw new RpcException({
-        message: `Inventory for product with id ${productId} not found`,
+        message: `Inventory for product with ID ${productId} not found`,
         statusCode: HttpStatus.NOT_FOUND,
       });
     }
@@ -140,83 +179,51 @@ export class InventoryService {
     return (await this.commitReserveMany([payload]))[0];
   }
 
-  private async runInventoriesTransaction(
+  private async processMany(
     payload: AddStockPayload[],
-    handler: (inventory: InventoryEntity, item: AddStockPayload) => void,
+    handler: (inv: InventoryEntity, item: AddStockPayload) => void,
+    validator?: (inv: InventoryEntity, item: AddStockPayload) => void,
   ): Promise<Inventory[]> {
     const inventories = await this.findInventoriesByIds(
-      payload.map((item) => item.productId),
+      payload.map((i) => i.productId),
     );
 
-    return this.dataSource.transaction(async (manager) => {
-      const updatedInventories: Inventory[] = [];
+    const missing = payload
+      .map((item) => item.productId)
+      .filter((id) => !inventories.some((inv) => inv.product.id === id));
+    if (missing.length) {
+      this.logger.error(
+        `Inventory not found for productIds: ${missing.join(', ')}`,
+      );
+      throw new RpcException({
+        message: `Inventory not found for productIds: ${missing.join(', ')}`,
+        statusCode: HttpStatus.BAD_REQUEST,
+      });
+    }
 
+    if (validator) {
       for (const item of payload) {
-        const inventory = inventories.find(
-          (inv) => inv.product.id === item.productId,
-        );
-
-        if (!inventory) {
-          this.logger.error(
-            `Inventory not found for productId ${item.productId}`,
-          );
+        const inv = inventories.find((x) => x.product.id === item.productId)!;
+        try {
+          validator(inv, item);
+        } catch (e) {
+          this.logger.error(e.message);
           throw new RpcException({
-            message: `Inventory not found for productId ${item.productId}`,
+            message: e.message,
             statusCode: HttpStatus.BAD_REQUEST,
           });
         }
-
-        handler(inventory, item);
-
-        const saved = await manager.save(inventory);
-        updatedInventories.push({
-          id: saved.id,
-          availableQuantity: saved.availableQuantity,
-          reservedQuantity: saved.reservedQuantity,
-          updatedAt: saved.updatedAt,
-          productId: item.productId,
-        });
-      }
-
-      return updatedInventories;
-    });
-  }
-
-  async reserveMany(payload: AddStockPayload[]): Promise<Inventory[]> {
-    const inventories = await this.findInventoriesByIds(
-      payload.map((item) => item.productId),
-    );
-
-    for (const item of payload) {
-      const inventory = inventories.find(
-        (inv) => inv.product.id === item.productId,
-      );
-
-      if (!inventory || inventory.availableQuantity < item.quantity) {
-        this.logger.error(
-          `Not enough stock for product with id ${item.productId}`,
-        );
-        throw new RpcException({
-          message: `Not enough stock for product with id ${item.productId}`,
-          statusCode: HttpStatus.BAD_REQUEST,
-        });
       }
     }
 
     return this.dataSource.transaction(async (manager) => {
-      const updatedInventories: Inventory[] = [];
-      for (const item of payload) {
-        const inventory = inventories.find(
-          (inv) => inv.product.id === item.productId,
-        );
+      const result: Inventory[] = [];
 
-        inventory.availableQuantity -= item.quantity;
-        inventory.reservedQuantity += item.quantity;
-        const saved = await manager.save(inventory);
-        this.logger.log(
-          `Reserved ${item.quantity} items in stock to inventory for product with id ${item.productId}`,
-        );
-        updatedInventories.push({
+      for (const item of payload) {
+        const inv = inventories.find((x) => x.product.id === item.productId)!;
+        handler(inv, item);
+        const saved = await manager.save(inv);
+        result.push({
           id: saved.id,
           availableQuantity: saved.availableQuantity,
           reservedQuantity: saved.reservedQuantity,
@@ -224,25 +231,46 @@ export class InventoryService {
           productId: item.productId,
         });
       }
-      return updatedInventories;
+
+      return result;
     });
   }
 
+  private ensureSufficientStock(inv: InventoryEntity, item: AddStockPayload) {
+    if (inv.availableQuantity < item.quantity) {
+      throw new Error(`Not enough stock for product with ID ${item.productId}`);
+    }
+  }
+
+  async reserveMany(payload: AddStockPayload[]): Promise<Inventory[]> {
+    return this.processMany(
+      payload,
+      (inv, item) => {
+        inv.availableQuantity -= item.quantity;
+        inv.reservedQuantity += item.quantity;
+        this.logger.log(
+          `Reserved ${item.quantity} for product with ID ${item.productId}`,
+        );
+      },
+      this.ensureSufficientStock.bind(this),
+    );
+  }
+
   async releaseReserveMany(payload: AddStockPayload[]): Promise<Inventory[]> {
-    return this.runInventoriesTransaction(payload, (inventory, item) => {
+    return this.processMany(payload, (inventory, item) => {
       inventory.availableQuantity += item.quantity;
       inventory.reservedQuantity -= item.quantity;
       this.logger.log(
-        `Released ${item.quantity} items for productId ${item.productId}`,
+        `Released ${item.quantity} items for product with ID ${item.productId}`,
       );
     });
   }
 
   async commitReserveMany(payload: AddStockPayload[]): Promise<Inventory[]> {
-    return this.runInventoriesTransaction(payload, (inventory, item) => {
+    return this.processMany(payload, (inventory, item) => {
       inventory.reservedQuantity -= item.quantity;
       this.logger.log(
-        `Committed ${item.quantity} items for productId ${item.productId}`,
+        `Committed ${item.quantity} items for product with ID ${item.productId}`,
       );
     });
   }

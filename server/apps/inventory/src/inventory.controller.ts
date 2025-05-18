@@ -10,6 +10,7 @@ import {
 import { BaseRpcController, RmqService } from '@app/rmq';
 import { AddStockDto } from './dto/inventory-add-stock.dto';
 import { CreateInventoryDto } from './dto/inventory-create.dto';
+import { GetInventoryByProductIdDto } from './dto/inventory-get-by-productid.dto';
 
 @Controller()
 export class InventoryController extends BaseRpcController {
@@ -27,6 +28,23 @@ export class InventoryController extends BaseRpcController {
   ) {
     await this.handleMessage(ctx, () =>
       this.inventoryService.createInventory(payload),
+    );
+  }
+
+  @MessagePattern('get_inventories')
+  async getInventories(@Ctx() ctx: RmqContext) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.getInventories(),
+    );
+  }
+
+  @MessagePattern('get_inventory')
+  async getInventoryByProductId(
+    @Payload() payload: GetInventoryByProductIdDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.inventoryService.getInventoryByProductId(payload),
     );
   }
 

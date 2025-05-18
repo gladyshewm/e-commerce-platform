@@ -7,6 +7,7 @@ import { DataSource, Repository } from 'typeorm';
 import { InventoryEntity, ProductEntity } from '@app/common/database/entities';
 import {
   AddStockPayload,
+  GetInventoryByProductIdPayload,
   Inventory,
   ProductCreatedPayload,
 } from '@app/common/contracts/inventory';
@@ -20,6 +21,7 @@ describe('InventoryService', () => {
 
   beforeEach(async () => {
     inventoryRepository = {
+      find: jest.fn(),
       findOneBy: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
@@ -100,6 +102,82 @@ describe('InventoryService', () => {
         'inventory_created',
         { productId: payload.productId, inventoryId: inventory.id },
       );
+    });
+  });
+
+  describe('getInventories', () => {
+    let result: Inventory[];
+    const inv: InventoryEntity = {
+      id: 1,
+      availableQuantity: 1,
+      reservedQuantity: 1,
+      updatedAt: new Date(),
+      product: { id: 1 } as ProductEntity,
+    };
+
+    beforeEach(async () => {
+      inventoryRepository.find.mockResolvedValue([inv]);
+      result = await inventoryService.getInventories();
+    });
+
+    it('should return inventories', () => {
+      expect(result).toEqual([
+        {
+          id: inv.id,
+          availableQuantity: inv.availableQuantity,
+          reservedQuantity: inv.reservedQuantity,
+          updatedAt: inv.updatedAt,
+          productId: inv.product.id,
+        },
+      ]);
+    });
+
+    it('should return empty array if no inventories', async () => {
+      inventoryRepository.find.mockResolvedValue([]);
+      result = await inventoryService.getInventories();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should throw RpcException if repository throws', async () => {
+      inventoryRepository.find.mockRejectedValue(new Error('Some error'));
+      await expect(inventoryService.getInventories()).rejects.toThrow(
+        RpcException,
+      );
+    });
+  });
+
+  describe('getInventoryByProductId', () => {
+    let result: Inventory;
+    const payload: GetInventoryByProductIdPayload = { productId: 1 };
+    const inv: InventoryEntity = {
+      id: 1,
+      availableQuantity: 1,
+      reservedQuantity: 1,
+      updatedAt: new Date(),
+      product: { id: 1 } as ProductEntity,
+    };
+
+    beforeEach(async () => {
+      inventoryRepository.findOne.mockResolvedValue(inv);
+      result = await inventoryService.getInventoryByProductId(payload);
+    });
+
+    it('should return inventory', () => {
+      expect(result).toEqual({
+        id: inv.id,
+        availableQuantity: inv.availableQuantity,
+        reservedQuantity: inv.reservedQuantity,
+        updatedAt: inv.updatedAt,
+        productId: inv.product.id,
+      });
+    });
+
+    it('should throw RpcException if inventory not found', async () => {
+      inventoryRepository.findOne.mockResolvedValue(null);
+      await expect(
+        inventoryService.getInventoryByProductId(payload),
+      ).rejects.toThrow(RpcException);
     });
   });
 
