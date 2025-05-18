@@ -1,7 +1,8 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
-import { Repository } from 'typeorm';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { LessThan, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
   EmailVerificationTokenEntity,
@@ -19,7 +20,20 @@ export class EmailVerificationService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  // TODO: CRON для очистки устаревших email-verif токенов
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  async cleanExpiredTokens() {
+    try {
+      await this.emailVerificationTokenRepository.delete({
+        expiresAt: LessThan(new Date()),
+      });
+      this.logger.log('Deleted expired email verification tokens');
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete expired email verification tokens: ${error.message}`,
+        error.stack,
+      );
+    }
+  }
 
   async createToken(userId: number): Promise<string> {
     try {

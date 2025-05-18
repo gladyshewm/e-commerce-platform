@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailVerificationService } from './email-verification.service';
 import {
@@ -35,6 +35,7 @@ describe('EmailVerificationService', () => {
             save: jest.fn(),
             findOne: jest.fn(),
             remove: jest.fn(),
+            delete: jest.fn(),
           },
         },
       ],
@@ -54,6 +55,19 @@ describe('EmailVerificationService', () => {
   describe('root', () => {
     it('should be defined', () => {
       expect(emailVerificationService).toBeDefined();
+    });
+  });
+
+  describe('cleanExpiredTokens', () => {
+    it('should delete expired email verification tokens', async () => {
+      jest.useFakeTimers().setSystemTime(new Date('2020-01-01'));
+      await emailVerificationService.cleanExpiredTokens();
+
+      expect(emailVerificationTokenRepository.delete).toHaveBeenCalledWith({
+        expiresAt: LessThan(new Date()),
+      });
+
+      jest.useRealTimers();
     });
   });
 

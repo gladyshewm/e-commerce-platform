@@ -13,6 +13,7 @@ import { TypeOrmConfigModule } from '@app/common/database/config';
 import * as Joi from 'joi';
 import { NOTIFICATION_SERVICE } from '@app/common/constants';
 import { EmailVerificationService } from './email-verification.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { EmailVerificationService } from './email-verification.service';
     ]),
     RmqModule,
     RmqModule.register({ name: NOTIFICATION_SERVICE }),
+    ScheduleModule.forRoot(),
   ],
   controllers: [UserController],
   providers: [Logger, UserService, EmailVerificationService],
