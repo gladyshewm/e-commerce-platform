@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Delivery, OrderCreatedPayload } from '@app/common/contracts/delivery';
 import { DeliveryEntity } from '@app/common/database/entities';
 import { DeliveryStatus } from '@app/common/database/enums';
-import { NOTIFICATION_SERVICE } from '@app/common/constants';
+import { NOTIFICATION_SERVICE, ORDER_SERVICE } from '@app/common/constants';
 
 @Injectable()
 export class DeliveryService {
@@ -16,6 +16,8 @@ export class DeliveryService {
     private readonly deliveryRepository: Repository<DeliveryEntity>,
     @Inject(NOTIFICATION_SERVICE)
     private readonly notificationServiceClient: ClientProxy,
+    @Inject(ORDER_SERVICE)
+    private readonly orderServiceClient: ClientProxy,
   ) {}
 
   async scheduleDelivery(payload: OrderCreatedPayload): Promise<void> {
@@ -61,10 +63,12 @@ export class DeliveryService {
 
     this.notificationServiceClient
       .emit('delivery_started', {
-        userId: userId,
-        orderId: orderId,
+        userId,
+        orderId,
       })
       .subscribe();
+
+    this.orderServiceClient.emit('order_shipped', { orderId }).subscribe();
 
     //FIXME: fake delay
     setTimeout(() => this.completeDelivery(userId, orderId), 5_000);
@@ -103,13 +107,15 @@ export class DeliveryService {
 
     this.notificationServiceClient
       .emit('delivery_completed', {
-        userId: userId,
-        orderId: orderId,
+        userId,
+        orderId,
       })
       .subscribe();
+
+    this.orderServiceClient.emit('order_delivered', { orderId }).subscribe();
   }
 
-  async updateDeliveryStatus(
+  private async updateDeliveryStatus(
     orderId: number,
     status: DeliveryStatus,
   ): Promise<Delivery> {
