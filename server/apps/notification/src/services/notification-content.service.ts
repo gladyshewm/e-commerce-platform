@@ -10,8 +10,8 @@ export class NotificationContentService {
     username: string,
     emailToken: string,
   ): NotificationContentPayload {
-    const url = this.configService.get<string>('API_URL'); // FIXME: replace with FRONTEND_URL
-    const link = `${url}/users/activate?token=${emailToken}`;
+    const url = this.configService.get<string>('API_URL'); // FIXME: replace with FRONTEND_URL (текущий API_URL ожидает POST-запрос, поэтому не получится просто перейти по ссылке)
+    const link = `${url}/users/activation?token=${emailToken}`;
     const subject = 'Account Activation';
     const content =
       `Hello, ${username}!\n` +

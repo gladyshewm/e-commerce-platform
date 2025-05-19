@@ -41,7 +41,7 @@ export class UserController {
     @Inject(USER_SERVICE) private readonly userServiceClient: ClientProxy,
   ) {}
 
-  @Get('activate')
+  @Post('activation')
   @ApiResponse({
     status: 200,
     type: ActivateUserEmailResponseDto,
@@ -64,7 +64,7 @@ export class UserController {
   }
 
   // если прошлый link истёк
-  @Post('email-activation-link')
+  @Post('activation-link')
   @UseGuards(JwtAuthGuard)
   @ApiResponse({
     status: 201,
@@ -146,4 +146,6 @@ export class UserController {
         .pipe(handleRpcError()),
     );
   }
+
+  // TODO: @Patch(':id') для изменения данных аккаунта, Delete для удаления аккаунта
 }

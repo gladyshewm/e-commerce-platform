@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -130,7 +131,7 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
-  @Post('logout')
+  @Delete('session')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User logout' })
   @ApiResponse({
@@ -166,7 +167,7 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
-  @Post('logout-all')
+  @Delete('sessions')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User logout from all sessions' })
   @ApiResponse({

@@ -45,4 +45,6 @@ export class OrderController {
         .pipe(handleRpcError()),
     );
   }
+
+  // TODO: GET /orders/{id} — получить конкретный заказ, GET /orders — список заказов, PATCH /orders/{id} — обновить статус заказа ??
 }
