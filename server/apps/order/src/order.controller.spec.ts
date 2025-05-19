@@ -5,12 +5,17 @@ import { OrderOrchestrator } from './saga/order.orchestrator';
 import { RmqService } from '@app/rmq';
 import { Order } from '@app/common/contracts/order';
 import { CreateOrderDto } from './dto/order-create.dto';
+import { OrderService } from './order.service';
+import { OrderShippedDto } from './dto/order-shipped.dto';
+import { OrderStatus } from '@app/common/database/enums';
 
 jest.mock('./saga/order.orchestrator');
+jest.mock('./order.service');
 
 describe('OrderController', () => {
   let orderController: OrderController;
   let orderOrchestrator: jest.Mocked<OrderOrchestrator>;
+  let orderService: jest.Mocked<OrderService>;
   let rmqService: jest.Mocked<RmqService>;
   const ctx = {} as RmqContext;
 
@@ -19,6 +24,7 @@ describe('OrderController', () => {
       controllers: [OrderController],
       providers: [
         OrderOrchestrator,
+        OrderService,
         {
           provide: RmqService,
           useValue: {
@@ -31,6 +37,7 @@ describe('OrderController', () => {
     orderController = app.get<OrderController>(OrderController);
     orderOrchestrator =
       app.get<jest.Mocked<OrderOrchestrator>>(OrderOrchestrator);
+    orderService = app.get<jest.Mocked<OrderService>>(OrderService);
     rmqService = app.get<jest.Mocked<RmqService>>(RmqService);
   });
 
@@ -63,6 +70,50 @@ describe('OrderController', () => {
 
     it('should return created order', () => {
       expect(result).toEqual(order);
+    });
+
+    it('should call ack', () => {
+      expect(rmqService.ack).toHaveBeenCalledWith(ctx);
+      expect(rmqService.ack).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('onShipped', () => {
+    const payload: OrderShippedDto = {
+      orderId: 1,
+    };
+
+    beforeEach(async () => {
+      await orderController.onShipped(payload, ctx);
+    });
+
+    it('should call orderService', () => {
+      expect(orderService.updateOrderStatus).toHaveBeenCalledWith(
+        payload.orderId,
+        OrderStatus.SHIPPED,
+      );
+    });
+
+    it('should call ack', () => {
+      expect(rmqService.ack).toHaveBeenCalledWith(ctx);
+      expect(rmqService.ack).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('onDelivered', () => {
+    const payload: OrderShippedDto = {
+      orderId: 1,
+    };
+
+    beforeEach(async () => {
+      await orderController.onDelivered(payload, ctx);
+    });
+
+    it('should call orderService', () => {
+      expect(orderService.updateOrderStatus).toHaveBeenCalledWith(
+        payload.orderId,
+        OrderStatus.DELIVERED,
+      );
     });
 
     it('should call ack', () => {
