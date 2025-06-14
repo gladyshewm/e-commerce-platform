@@ -6,6 +6,7 @@ import { catchError, lastValueFrom } from 'rxjs';
 import { Profile, Strategy } from 'passport-github2';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
+import { AuthCommands } from '@app/common/messaging';
 import { GITHUB_PROVIDER } from '../constants';
 import { AuthenticatedUser } from '../types';
 
@@ -32,7 +33,7 @@ export class GithubStrategy extends PassportStrategy(Strategy) {
     const email = emails[0].value;
     const user = await lastValueFrom(
       this.authService
-        .send<UserWithoutPassword>('validate_user_oauth', {
+        .send<UserWithoutPassword>(AuthCommands.ValidateUserOAuth, {
           provider: GITHUB_PROVIDER,
           providerId,
           username,

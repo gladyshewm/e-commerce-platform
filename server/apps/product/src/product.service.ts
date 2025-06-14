@@ -17,10 +17,11 @@ import {
 } from '@app/common/database/entities';
 import { Repository } from 'typeorm';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { INVENTORY_SERVICE, USER_SERVICE } from '@app/common/constants';
-import { catchError, lastValueFrom } from 'rxjs';
-import { UserWithoutPassword } from '@app/common/contracts/user';
 import { InjectRepository } from '@nestjs/typeorm';
+import { catchError, lastValueFrom } from 'rxjs';
+import { INVENTORY_SERVICE, USER_SERVICE } from '@app/common/constants';
+import { UserWithoutPassword } from '@app/common/contracts/user';
+import { ProductEvents, UserCommands } from '@app/common/messaging';
 
 @Injectable()
 export class ProductService {
@@ -114,7 +115,7 @@ export class ProductService {
       const saved = await this.productRepository.save(product);
 
       this.inventoryServiceClient
-        .emit('product_created', {
+        .emit(ProductEvents.Created, {
           productId: saved.id,
         })
         .subscribe();
@@ -271,7 +272,7 @@ export class ProductService {
 
     const user = await lastValueFrom(
       this.userServiceClient
-        .send<UserWithoutPassword>('get_user_by_id', {
+        .send<UserWithoutPassword>(UserCommands.GetById, {
           id: payload.userId,
         })
         .pipe(

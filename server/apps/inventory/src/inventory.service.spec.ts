@@ -11,6 +11,7 @@ import {
   Inventory,
   ProductCreatedPayload,
 } from '@app/common/contracts/inventory';
+import { InventoryEvents } from '@app/common/messaging';
 
 describe('InventoryService', () => {
   let inventoryService: InventoryService;
@@ -88,7 +89,7 @@ describe('InventoryService', () => {
       await inventoryService.createInventory(payload);
 
       expect(productServiceClient.emit).toHaveBeenCalledWith(
-        'inventory_create_failed',
+        InventoryEvents.CreationFailed,
         { productId: payload.productId },
       );
     });
@@ -99,7 +100,7 @@ describe('InventoryService', () => {
 
     it('should emit inventory_created', () => {
       expect(productServiceClient.emit).toHaveBeenCalledWith(
-        'inventory_created',
+        InventoryEvents.Created,
         { productId: payload.productId, inventoryId: inventory.id },
       );
     });

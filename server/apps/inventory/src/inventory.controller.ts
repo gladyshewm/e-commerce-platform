@@ -8,6 +8,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
+import { InventoryCommands, ProductEvents } from '@app/common/messaging';
 import { AddStockDto } from './dto/inventory-add-stock.dto';
 import { CreateInventoryDto } from './dto/inventory-create.dto';
 import { GetInventoryByProductIdDto } from './dto/inventory-get-by-productid.dto';
@@ -21,7 +22,7 @@ export class InventoryController extends BaseRpcController {
     super(rmqService);
   }
 
-  @EventPattern('product_created')
+  @EventPattern(ProductEvents.Created)
   async handleProductCreated(
     @Payload() payload: CreateInventoryDto,
     @Ctx() ctx: RmqContext,
@@ -31,14 +32,14 @@ export class InventoryController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('get_inventories')
+  @MessagePattern(InventoryCommands.GetAll)
   async getInventories(@Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () =>
       this.inventoryService.getInventories(),
     );
   }
 
-  @MessagePattern('get_inventory')
+  @MessagePattern(InventoryCommands.GetByProductId)
   async getInventoryByProductId(
     @Payload() payload: GetInventoryByProductIdDto,
     @Ctx() ctx: RmqContext,
@@ -48,28 +49,28 @@ export class InventoryController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('add_stock')
+  @MessagePattern(InventoryCommands.AddStock)
   async addStock(@Payload() payload: AddStockDto, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () =>
       this.inventoryService.addStock(payload),
     );
   }
 
-  @MessagePattern('reserve')
+  @MessagePattern(InventoryCommands.Reserve)
   async reserveOne(@Payload() payload: AddStockDto, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () =>
       this.inventoryService.reserveOne(payload),
     );
   }
 
-  @MessagePattern('reserve_many')
+  @MessagePattern(InventoryCommands.ReserveMany)
   async reserveMany(@Payload() payload: AddStockDto[], @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () =>
       this.inventoryService.reserveMany(payload),
     );
   }
 
-  @MessagePattern('commit_reserve')
+  @MessagePattern(InventoryCommands.CommitReserve)
   async commitReserveOne(
     @Payload() payload: AddStockDto,
     @Ctx() ctx: RmqContext,
@@ -79,7 +80,7 @@ export class InventoryController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('commit_reserve_many')
+  @MessagePattern(InventoryCommands.CommitReserveMany)
   async commitReserveMany(
     @Payload() payload: AddStockDto[],
     @Ctx() ctx: RmqContext,
@@ -89,7 +90,7 @@ export class InventoryController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('release_reserve')
+  @MessagePattern(InventoryCommands.ReleaseReserve)
   async releaseReserveOne(
     @Payload() payload: AddStockDto,
     @Ctx() ctx: RmqContext,
@@ -99,7 +100,7 @@ export class InventoryController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('release_reserve_many')
+  @MessagePattern(InventoryCommands.ReleaseReserveMany)
   async releaseReserveMany(
     @Payload() payload: AddStockDto[],
     @Ctx() ctx: RmqContext,

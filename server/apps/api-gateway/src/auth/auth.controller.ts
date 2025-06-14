@@ -17,6 +17,7 @@ import { lastValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AUTH_SERVICE } from '@app/common/constants';
+import { AuthCommands } from '@app/common/messaging';
 import { LoginResponse, RegisterResponse } from '@app/common/contracts/auth';
 import { LoginDto } from './dto/auth-login.dto';
 import { LoginResponseDto } from './dto/auth-login-response.dto';
@@ -57,7 +58,7 @@ export class AuthController {
     const { userAgent, ipAddress } = extractRequestMeta(req);
     const response = await lastValueFrom<RegisterResponse>(
       this.authServiceClient
-        .send('register', { ...dto, userAgent, ipAddress })
+        .send(AuthCommands.Register, { ...dto, userAgent, ipAddress })
         .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, response.refreshToken);
@@ -87,7 +88,7 @@ export class AuthController {
     const { id, username, role } = user;
     const tokens = await lastValueFrom<LoginResponse>(
       this.authServiceClient
-        .send('login', { id, username, role, userAgent, ipAddress })
+        .send(AuthCommands.Login, { id, username, role, userAgent, ipAddress })
         .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, tokens.refreshToken);
@@ -123,7 +124,7 @@ export class AuthController {
 
     const tokens = await lastValueFrom<LoginResponse>(
       this.authServiceClient
-        .send('refresh', { refreshToken, userAgent, ipAddress })
+        .send(AuthCommands.Refresh, { refreshToken, userAgent, ipAddress })
         .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, tokens.refreshToken);
@@ -159,7 +160,7 @@ export class AuthController {
 
     await lastValueFrom(
       this.authServiceClient
-        .send('logout', { refreshToken })
+        .send(AuthCommands.Logout, { refreshToken })
         .pipe(handleRpcError()),
     );
     clearRefreshTokenCookie(res);
@@ -197,7 +198,7 @@ export class AuthController {
 
     await lastValueFrom(
       this.authServiceClient
-        .send('logout_all', { refreshToken })
+        .send(AuthCommands.LogoutAll, { refreshToken })
         .pipe(handleRpcError()),
     );
     clearRefreshTokenCookie(res);

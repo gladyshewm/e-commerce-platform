@@ -6,6 +6,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError, lastValueFrom } from 'rxjs';
 import { AddStockPayload } from '@app/common/contracts/inventory';
 import { INVENTORY_SERVICE } from '@app/common/constants';
+import { InventoryCommands } from '@app/common/messaging';
 
 @Injectable()
 export class ReserveItemsStep extends SagaStep<OrderSagaContext> {
@@ -27,14 +28,16 @@ export class ReserveItemsStep extends SagaStep<OrderSagaContext> {
     }));
 
     await lastValueFrom(
-      this.inventoryServiceClient.send('reserve_many', payload).pipe(
-        catchError((error) => {
-          throw new RpcException({
-            message: error.message,
-            statusCode: error.statusCode,
-          });
-        }),
-      ),
+      this.inventoryServiceClient
+        .send(InventoryCommands.ReserveMany, payload)
+        .pipe(
+          catchError((error) => {
+            throw new RpcException({
+              message: error.message,
+              statusCode: error.statusCode,
+            });
+          }),
+        ),
     );
   }
 
@@ -48,7 +51,10 @@ export class ReserveItemsStep extends SagaStep<OrderSagaContext> {
     }));
 
     await lastValueFrom(
-      this.inventoryServiceClient.send('release_reserve_many', payload),
+      this.inventoryServiceClient.send(
+        InventoryCommands.ReleaseReserveMany,
+        payload,
+      ),
     );
   }
 }

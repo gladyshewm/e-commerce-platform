@@ -25,7 +25,7 @@ export class DeliveryEntity {
   @Column({ nullable: true })
   deliveredAt?: Date;
 
-  @OneToOne(() => OrderEntity, { eager: true })
+  @OneToOne(() => OrderEntity, { eager: true, onDelete: 'CASCADE' })
   @JoinColumn()
   order: OrderEntity;
 }

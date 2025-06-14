@@ -19,6 +19,7 @@ import {
   UserWithOAuth,
   UserWithoutPassword,
 } from '@app/common/contracts/user';
+import { UserCommands } from '@app/common/messaging';
 import { TokenService } from './token.service';
 
 @Injectable()
@@ -36,7 +37,7 @@ export class AuthService {
     const { username, password } = payload;
     const user = await lastValueFrom(
       this.userServiceClient
-        .send<User>('get_user_by_name', {
+        .send<User>(UserCommands.GetByName, {
           username,
         })
         .pipe(
@@ -67,7 +68,7 @@ export class AuthService {
     const { ipAddress, userAgent, ...credentials } = payload;
     const user = await lastValueFrom(
       this.userServiceClient
-        .send<UserWithoutPassword>('create_user', credentials)
+        .send<UserWithoutPassword>(UserCommands.Create, credentials)
         .pipe(
           catchError((error) => {
             throw new RpcException({
@@ -190,7 +191,7 @@ export class AuthService {
 
     const existingOAuthUser = await lastValueFrom<UserWithOAuth | null>(
       this.userServiceClient
-        .send('get_user_by_oauth', { provider, providerId })
+        .send(UserCommands.GetByOAuth, { provider, providerId })
         .pipe(catchError(() => of(null))),
     );
 
@@ -201,7 +202,7 @@ export class AuthService {
 
     const existingUser = await lastValueFrom<User | null>(
       this.userServiceClient
-        .send('get_user_by_email', { email })
+        .send(UserCommands.GetByEmail, { email })
         .pipe(catchError(() => of(null))),
     );
 
@@ -210,7 +211,7 @@ export class AuthService {
     if (existingUser) {
       user = await lastValueFrom<UserWithoutPassword>(
         this.userServiceClient
-          .send('link_user_with_oauth', {
+          .send(UserCommands.LinkWithOAuth, {
             userId: existingUser.id,
             provider,
             providerId,
@@ -227,7 +228,7 @@ export class AuthService {
     } else {
       user = await lastValueFrom<UserWithoutPassword>(
         this.userServiceClient
-          .send('create_user_oauth', {
+          .send(UserCommands.CreateOAuth, {
             username,
             email,
             provider,

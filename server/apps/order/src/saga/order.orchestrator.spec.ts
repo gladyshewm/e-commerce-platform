@@ -9,6 +9,7 @@ import { SagaStep } from './create-order/steps/saga-step';
 import { OrderSagaContext } from './types/order-saga-ctx.interface';
 import { DELIVERY_SERVICE, NOTIFICATION_SERVICE } from '@app/common/constants';
 import { CreateOrderPayload, Order } from '@app/common/contracts/order';
+import { OrderEvents } from '@app/common/messaging';
 
 jest.mock('../order.service');
 jest.mock('./create-order/create-order-saga.factory');
@@ -115,14 +116,17 @@ describe('OrderOrchestrator', () => {
     });
 
     it('should emit order_created event for the delivery service', () => {
-      expect(deliveryServiceClient.emit).toHaveBeenCalledWith('order_created', {
-        orderId: order.id,
-      });
+      expect(deliveryServiceClient.emit).toHaveBeenCalledWith(
+        OrderEvents.Created,
+        {
+          orderId: order.id,
+        },
+      );
     });
 
     it('should emit order_created event for the notification service', () => {
       expect(notificationServiceClient.emit).toHaveBeenCalledWith(
-        'order_created',
+        OrderEvents.Created,
         {
           userId: order.userId,
           orderId: order.id,

@@ -7,6 +7,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
+import { UserCommands } from '@app/common/messaging';
 import { GetUserByIdDto } from './dto/user-get-by-id.dto';
 import { GetUserByNameDto } from './dto/user-get-by-name.dto';
 import { CreateUserDto } from './dto/user-create.dto';
@@ -27,12 +28,12 @@ export class UserController extends BaseRpcController {
     super(rmqService);
   }
 
-  @MessagePattern('create_user')
+  @MessagePattern(UserCommands.Create)
   async createUser(@Payload() payload: CreateUserDto, @Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () => this.userService.createUser(payload));
   }
 
-  @MessagePattern('send_email_activation_link')
+  @MessagePattern(UserCommands.SendEmailActivationLink)
   async sendEmailActivationLink(
     @Payload() payload: SendEmailActivationLinkDto,
     @Ctx() ctx: RmqContext,
@@ -44,7 +45,7 @@ export class UserController extends BaseRpcController {
     return { success: true };
   }
 
-  @MessagePattern('activate_user_email')
+  @MessagePattern(UserCommands.ActivateEmail)
   async activateUserEmail(
     @Payload() payload: ActivateUserEmailDto,
     @Ctx() ctx: RmqContext,
@@ -56,7 +57,7 @@ export class UserController extends BaseRpcController {
     return { success: true };
   }
 
-  @MessagePattern('get_user_by_id')
+  @MessagePattern(UserCommands.GetById)
   async getUserById(
     @Payload() payload: GetUserByIdDto,
     @Ctx() ctx: RmqContext,
@@ -64,7 +65,7 @@ export class UserController extends BaseRpcController {
     return this.handleMessage(ctx, () => this.userService.getUserById(payload));
   }
 
-  @MessagePattern('get_user_by_name')
+  @MessagePattern(UserCommands.GetByName)
   async getUserByName(
     @Payload() payload: GetUserByNameDto,
     @Ctx() ctx: RmqContext,
@@ -74,7 +75,7 @@ export class UserController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('update_user_role')
+  @MessagePattern(UserCommands.UpdateRole)
   async updateUserRole(
     @Payload() payload: UpdateUserRoleDto,
     @Ctx() ctx: RmqContext,
@@ -84,7 +85,7 @@ export class UserController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('get_user_by_oauth')
+  @MessagePattern(UserCommands.GetByOAuth)
   async getUserByOAuth(
     @Payload() payload: GetUserByOAuthDto,
     @Ctx() ctx: RmqContext,
@@ -94,7 +95,7 @@ export class UserController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('get_user_by_email')
+  @MessagePattern(UserCommands.GetByEmail)
   async getUserByEmail(
     @Payload() payload: GetUserByEmailDto,
     @Ctx() ctx: RmqContext,
@@ -104,7 +105,7 @@ export class UserController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('link_user_with_oauth')
+  @MessagePattern(UserCommands.LinkWithOAuth)
   async linkUserWithOAuth(
     @Payload() payload: LinkUserWithOAuthDto,
     @Ctx() ctx: RmqContext,
@@ -114,7 +115,7 @@ export class UserController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('create_user_oauth')
+  @MessagePattern(UserCommands.CreateOAuth)
   async createUserOAuth(
     @Payload() payload: CreateUserOAuthDto,
     @Ctx() ctx: RmqContext,

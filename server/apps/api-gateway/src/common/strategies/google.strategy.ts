@@ -6,6 +6,7 @@ import { catchError, lastValueFrom } from 'rxjs';
 import { Profile, Strategy } from 'passport-google-oauth20';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
+import { AuthCommands } from '@app/common/messaging';
 import { GOOGLE_PROVIDER } from '../constants/oauth-providers.constant';
 import { AuthenticatedUser } from '../types';
 
@@ -31,7 +32,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     const { id: providerId, name, emails } = profile;
     const user = await lastValueFrom(
       this.authService
-        .send<UserWithoutPassword>('validate_user_oauth', {
+        .send<UserWithoutPassword>(AuthCommands.ValidateUserOAuth, {
           provider: GOOGLE_PROVIDER,
           providerId,
           username: name.givenName, // name.givenName + name.familyName

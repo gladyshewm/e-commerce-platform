@@ -5,6 +5,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { catchError, lastValueFrom } from 'rxjs';
 import { AUTH_SERVICE } from '@app/common/constants';
 import { ValidateUserResponse } from '@app/common/contracts/auth';
+import { AuthCommands } from '@app/common/messaging';
 import { AuthenticatedUser } from '../types';
 
 @Injectable()
@@ -18,11 +19,13 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     password: string,
   ): Promise<AuthenticatedUser> {
     const user = await lastValueFrom<ValidateUserResponse>(
-      this.authService.send('validate_user', { username, password }).pipe(
-        catchError((error) => {
-          throw new HttpException(error.message, error.statusCode);
-        }),
-      ),
+      this.authService
+        .send(AuthCommands.ValidateUser, { username, password })
+        .pipe(
+          catchError((error) => {
+            throw new HttpException(error.message, error.statusCode);
+          }),
+        ),
     );
 
     return {

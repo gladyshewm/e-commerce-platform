@@ -21,6 +21,7 @@ import {
 import { USER_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
 import { UserRole } from '@app/common/database/enums';
+import { UserCommands } from '@app/common/messaging';
 import { GetUserResponseDto } from './dto/user-get-response.dto';
 import { GetUserDto } from './dto/user-get.dto';
 import { UpdateUserRoleDto } from './dto/user-update-role.dto';
@@ -56,7 +57,7 @@ export class UserController {
   ): Promise<ActivateUserEmailResponseDto> {
     await lastValueFrom(
       this.userServiceClient
-        .send('activate_user_email', query)
+        .send(UserCommands.ActivateEmail, query)
         .pipe(handleRpcError()),
     );
 
@@ -81,7 +82,7 @@ export class UserController {
   ): Promise<SendEmailActivationLinkResponseDto> {
     await lastValueFrom(
       this.userServiceClient
-        .send('send_email_activation_link', dto)
+        .send(UserCommands.SendEmailActivationLink, dto)
         .pipe(handleRpcError()),
     );
 
@@ -102,7 +103,7 @@ export class UserController {
   ): Promise<GetUserResponseDto> {
     return lastValueFrom<UserWithoutPassword>(
       this.userServiceClient
-        .send('get_user_by_id', { id: user.id })
+        .send(UserCommands.GetById, { id: user.id })
         .pipe(handleRpcError()),
     );
   }
@@ -118,7 +119,9 @@ export class UserController {
   @ApiBearerAuth()
   async getUser(@Param() dto: GetUserDto): Promise<GetUserResponseDto> {
     return lastValueFrom<UserWithoutPassword>(
-      this.userServiceClient.send('get_user_by_id', dto).pipe(handleRpcError()),
+      this.userServiceClient
+        .send(UserCommands.GetById, dto)
+        .pipe(handleRpcError()),
     );
   }
 
@@ -142,7 +145,7 @@ export class UserController {
   ): Promise<GetUserResponseDto> {
     return lastValueFrom<UserWithoutPassword>(
       this.userServiceClient
-        .send('update_user_role', { userId: params.id, role: dto.role })
+        .send(UserCommands.UpdateRole, { userId: params.id, role: dto.role })
         .pipe(handleRpcError()),
     );
   }

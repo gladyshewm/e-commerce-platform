@@ -46,7 +46,7 @@ export class PaymentTransactionEntity {
   @ManyToOne(() => UserEntity)
   user: UserEntity;
 
-  @OneToOne(() => OrderEntity)
+  @OneToOne(() => OrderEntity, { onDelete: 'CASCADE' })
   @JoinColumn()
   order: OrderEntity;
 }

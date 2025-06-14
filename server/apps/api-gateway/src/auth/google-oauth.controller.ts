@@ -12,6 +12,7 @@ import {
 } from '../common/utils';
 import { LoginResponse } from '@app/common/contracts/auth';
 import { AUTH_SERVICE } from '@app/common/constants';
+import { AuthCommands } from '@app/common/messaging';
 import { LoginResponseDto } from './dto/auth-login-response.dto';
 
 @Controller('auth/google')
@@ -36,7 +37,7 @@ export class GoogleOauthController {
 
     const tokens = await lastValueFrom<LoginResponse>(
       this.authServiceClient
-        .send('login', { id, username, role, userAgent, ipAddress })
+        .send(AuthCommands.Login, { id, username, role, userAgent, ipAddress })
         .pipe(handleRpcError()),
     );
     setRefreshTokenCookie(res, tokens.refreshToken);

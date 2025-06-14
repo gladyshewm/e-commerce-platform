@@ -20,6 +20,7 @@ import {
 } from '@app/common/contracts/product';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { of } from 'rxjs';
+import { ProductEvents, UserCommands } from '@app/common/messaging';
 import { CreateCategoryDto } from './dto/category/category-create.dto';
 import { UpdateCategoryDto } from './dto/category/category-update.dto';
 
@@ -266,7 +267,7 @@ describe('ProductService', () => {
 
       it('should emit product_created event', () => {
         expect(inventoryServiceClient.emit).toHaveBeenCalledWith(
-          'product_created',
+          ProductEvents.Created,
           { productId: product.id },
         );
       });
@@ -488,9 +489,12 @@ describe('ProductService', () => {
       });
 
       it('should get user from user service', () => {
-        expect(userServiceClient.send).toHaveBeenCalledWith('get_user_by_id', {
-          id: payload.userId,
-        });
+        expect(userServiceClient.send).toHaveBeenCalledWith(
+          UserCommands.GetById,
+          {
+            id: payload.userId,
+          },
+        );
       });
 
       it('should save review in the database', () => {

@@ -6,6 +6,7 @@ import { Delivery, OrderCreatedPayload } from '@app/common/contracts/delivery';
 import { DeliveryEntity } from '@app/common/database/entities';
 import { DeliveryStatus } from '@app/common/database/enums';
 import { NOTIFICATION_SERVICE, ORDER_SERVICE } from '@app/common/constants';
+import { DeliveryEvents, OrderEvents } from '@app/common/messaging';
 
 @Injectable()
 export class DeliveryService {
@@ -43,7 +44,7 @@ export class DeliveryService {
     this.logger.log(`Delivery scheduled for order with ID ${payload.orderId}`);
 
     this.notificationServiceClient
-      .emit('delivery_scheduled', {
+      .emit(DeliveryEvents.Scheduled, {
         userId: payload.userId,
         orderId: payload.orderId,
       })
@@ -62,13 +63,13 @@ export class DeliveryService {
     this.logger.log(`Delivery for order with ID ${orderId} started`);
 
     this.notificationServiceClient
-      .emit('delivery_started', {
+      .emit(DeliveryEvents.Started, {
         userId,
         orderId,
       })
       .subscribe();
 
-    this.orderServiceClient.emit('order_shipped', { orderId }).subscribe();
+    this.orderServiceClient.emit(OrderEvents.Shipped, { orderId }).subscribe();
 
     //FIXME: fake delay
     setTimeout(() => this.completeDelivery(userId, orderId), 5_000);
@@ -106,13 +107,15 @@ export class DeliveryService {
     this.logger.log(`Delivery for order with ID ${orderId} completed`);
 
     this.notificationServiceClient
-      .emit('delivery_completed', {
+      .emit(DeliveryEvents.Completed, {
         userId,
         orderId,
       })
       .subscribe();
 
-    this.orderServiceClient.emit('order_delivered', { orderId }).subscribe();
+    this.orderServiceClient
+      .emit(OrderEvents.Delivered, { orderId })
+      .subscribe();
   }
 
   private async updateDeliveryStatus(

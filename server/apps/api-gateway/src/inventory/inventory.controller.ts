@@ -17,6 +17,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { INVENTORY_SERVICE } from '@app/common/constants';
 import { UserRole } from '@app/common/database/enums';
+import { InventoryCommands } from '@app/common/messaging';
 import { AddStockDto } from './dto/inventory-add-stock.dto';
 import { InventoryDto } from './dto/inventory.dto';
 import { JwtAuthGuard, RolesGuard } from '../common/guards';
@@ -48,7 +49,7 @@ export class InventoryController {
   async getInventories(): Promise<InventoryDto[]> {
     return lastValueFrom(
       this.inventoryServiceClient
-        .send('get_inventories', {})
+        .send(InventoryCommands.GetAll, {})
         .pipe(handleRpcError()),
     );
   }
@@ -74,7 +75,7 @@ export class InventoryController {
   ): Promise<InventoryDto> {
     return lastValueFrom(
       this.inventoryServiceClient
-        .send('get_inventory', { productId })
+        .send(InventoryCommands.GetByProductId, { productId })
         .pipe(handleRpcError()),
     );
   }
@@ -101,7 +102,7 @@ export class InventoryController {
   ): Promise<InventoryDto> {
     return lastValueFrom(
       this.inventoryServiceClient
-        .send('add_stock', { productId, ...dto })
+        .send(InventoryCommands.AddStock, { productId, ...dto })
         .pipe(handleRpcError()),
     );
   }

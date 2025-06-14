@@ -9,6 +9,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { ORDER_SERVICE } from '@app/common/constants';
 import { Order } from '@app/common/contracts/order';
+import { OrderCommands } from '@app/common/messaging';
 import { CreateOrderDto } from './dto/order-create.dto';
 import { OrderDto } from './dto/order.dto';
 import { JwtAuthGuard } from '../common/guards';
@@ -38,7 +39,7 @@ export class OrderController {
   ) {
     return lastValueFrom<Order>(
       this.orderServiceClient
-        .send('create_order', {
+        .send(OrderCommands.Create, {
           ...dto,
           userId: user.id,
         })

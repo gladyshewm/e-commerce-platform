@@ -11,6 +11,7 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { OrderStatus, PaymentStatus } from '@app/common/database/enums';
 import { OrderService } from '../../../order.service';
 import { PAYMENT_SERVICE } from '@app/common/constants';
+import { PaymentCommands } from '@app/common/messaging';
 
 @Injectable()
 export class ChargePaymentStep extends SagaStep<OrderSagaContext> {
@@ -35,7 +36,7 @@ export class ChargePaymentStep extends SagaStep<OrderSagaContext> {
     };
 
     const result = await lastValueFrom<PaymentTransaction>(
-      this.paymentServiceClient.send('charge_payment', payload).pipe(
+      this.paymentServiceClient.send(PaymentCommands.Charge, payload).pipe(
         catchError((error) => {
           throw new RpcException({
             message: error.message,
@@ -63,7 +64,7 @@ export class ChargePaymentStep extends SagaStep<OrderSagaContext> {
     this.logger.log(`Refunding payment for order with ID ${context.order.id}`);
 
     await lastValueFrom(
-      this.paymentServiceClient.send('refund_payment', {
+      this.paymentServiceClient.send(PaymentCommands.Refund, {
         orderId: context.order.id,
       }),
     );

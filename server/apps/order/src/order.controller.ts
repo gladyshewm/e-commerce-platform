@@ -8,6 +8,7 @@ import {
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
 import { OrderStatus } from '@app/common/database/enums';
+import { OrderCommands, OrderEvents } from '@app/common/messaging';
 import { OrderOrchestrator } from './saga/order.orchestrator';
 import { CreateOrderDto } from './dto/order-create.dto';
 import { OrderService } from './order.service';
@@ -23,7 +24,7 @@ export class OrderController extends BaseRpcController {
     super(rmqService);
   }
 
-  @MessagePattern('create_order')
+  @MessagePattern(OrderCommands.Create)
   async createOrder(
     @Payload() payload: CreateOrderDto,
     @Ctx() ctx: RmqContext,
@@ -33,14 +34,14 @@ export class OrderController extends BaseRpcController {
     );
   }
 
-  @EventPattern('order_shipped')
+  @EventPattern(OrderEvents.Shipped)
   async onShipped(@Payload() payload: OrderShippedDto, @Ctx() ctx: RmqContext) {
     await this.handleMessage(ctx, () =>
       this.orderService.updateOrderStatus(payload.orderId, OrderStatus.SHIPPED),
     );
   }
 
-  @EventPattern('order_delivered')
+  @EventPattern(OrderEvents.Delivered)
   async onDelivered(
     @Payload() payload: OrderShippedDto,
     @Ctx() ctx: RmqContext,

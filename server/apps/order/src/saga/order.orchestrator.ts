@@ -6,6 +6,7 @@ import { OrderSagaContext } from './types/order-saga-ctx.interface';
 import { CreateOrderSagaFactory } from './create-order/create-order-saga.factory';
 import { DELIVERY_SERVICE, NOTIFICATION_SERVICE } from '@app/common/constants';
 import { ClientProxy } from '@nestjs/microservices';
+import { OrderEvents } from '../../../../libs/common/src/messaging';
 
 @Injectable()
 export class OrderOrchestrator {
@@ -31,15 +32,17 @@ export class OrderOrchestrator {
     try {
       await saga.execute(context);
 
+      // FIXME:
+
       this.deliveryServiceClient
-        .emit('order_created', {
+        .emit(OrderEvents.Created, {
           userId: order.userId,
           orderId: order.id,
         })
         .subscribe();
 
       this.notificationServiceClient
-        .emit('order_created', {
+        .emit(OrderEvents.Created, {
           userId: order.userId,
           orderId: order.id,
         })

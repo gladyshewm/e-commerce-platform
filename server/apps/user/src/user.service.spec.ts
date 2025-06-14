@@ -22,6 +22,7 @@ import {
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { UserRole } from '@app/common/database/enums';
 import { NOTIFICATION_SERVICE } from '@app/common/constants';
+import { UserCommands } from '@app/common/messaging';
 import { EmailVerificationService } from './email-verification.service';
 
 jest.mock('./email-verification.service');
@@ -201,7 +202,7 @@ describe('UserService', () => {
 
     it('should send email activation link', () => {
       expect(notificationServiceClient.emit).toHaveBeenCalledWith(
-        'send_email_activation_link',
+        UserCommands.SendEmailActivationLink,
         {
           userId: user.id,
           username: user.username,

@@ -4,6 +4,11 @@ import { Ctx, EventPattern, Payload, RmqContext } from '@nestjs/microservices';
 import { NotificationService } from './services';
 import { NotifyOrderDto } from './dto/notification-notify-order.dto';
 import { SendEmailActivationLinkDto } from './dto/notification-send-email-activation-link.dto';
+import {
+  DeliveryEvents,
+  OrderEvents,
+  UserCommands,
+} from '@app/common/messaging';
 
 @Controller()
 export class NotificationController extends BaseRpcController {
@@ -14,7 +19,7 @@ export class NotificationController extends BaseRpcController {
     super(rmqService);
   }
 
-  @EventPattern('send_email_activation_link')
+  @EventPattern(UserCommands.SendEmailActivationLink)
   async handleSendEmailActivationLink(
     @Payload() payload: SendEmailActivationLinkDto,
     @Ctx() ctx: RmqContext,
@@ -24,7 +29,7 @@ export class NotificationController extends BaseRpcController {
     );
   }
 
-  @EventPattern('order_created')
+  @EventPattern(OrderEvents.Created)
   async handleOrderCreated(
     @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,
@@ -34,7 +39,7 @@ export class NotificationController extends BaseRpcController {
     );
   }
 
-  @EventPattern('delivery_scheduled')
+  @EventPattern(DeliveryEvents.Scheduled)
   async handleDeliveryScheduled(
     @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,
@@ -44,7 +49,7 @@ export class NotificationController extends BaseRpcController {
     );
   }
 
-  @EventPattern('delivery_started')
+  @EventPattern(DeliveryEvents.Started)
   async handleDeliveryStarted(
     @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,
@@ -54,7 +59,7 @@ export class NotificationController extends BaseRpcController {
     );
   }
 
-  @EventPattern('delivery_completed')
+  @EventPattern(DeliveryEvents.Completed)
   async handleDeliveryCompleted(
     @Payload() payload: NotifyOrderDto,
     @Ctx() ctx: RmqContext,

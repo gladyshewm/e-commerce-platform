@@ -6,6 +6,7 @@ import { NotificationSender } from '../../types/notification-sender.interface';
 import { SendNotificationPayload } from '../../types/send-notification.interface';
 import { USER_SERVICE } from '@app/common/constants';
 import { UserWithoutPassword } from '@app/common/contracts/user';
+import { UserCommands } from '@app/common/messaging';
 
 @Injectable()
 export class EmailNotificationSender implements NotificationSender {
@@ -20,7 +21,7 @@ export class EmailNotificationSender implements NotificationSender {
   private async getUserEmail(userId: number): Promise<string> {
     const user = await lastValueFrom(
       this.userServiceClient
-        .send<UserWithoutPassword>('get_user_by_id', {
+        .send<UserWithoutPassword>(UserCommands.GetById, {
           id: userId,
         })
         .pipe(

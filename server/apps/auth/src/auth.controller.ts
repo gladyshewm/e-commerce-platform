@@ -13,6 +13,7 @@ import {
   ValidateUserPayload,
   ValidateUserResponse,
 } from '@app/common/contracts/auth';
+import { AuthCommands } from '@app/common/messaging';
 import { RegisterDto } from './dto/auth-register.dto';
 import { LoginDto } from './dto/auth-login.dto';
 import { RefreshDto } from './dto/auth-refresh.dto';
@@ -28,7 +29,7 @@ export class AuthController extends BaseRpcController {
     super(rmqService);
   }
 
-  @MessagePattern('validate_user')
+  @MessagePattern(AuthCommands.ValidateUser)
   async validateUser(
     @Payload() payload: ValidateUserPayload,
     @Ctx() ctx: RmqContext,
@@ -38,7 +39,7 @@ export class AuthController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('register')
+  @MessagePattern(AuthCommands.Register)
   async register(
     @Payload() payload: RegisterDto,
     @Ctx() ctx: RmqContext,
@@ -46,7 +47,7 @@ export class AuthController extends BaseRpcController {
     return this.handleMessage(ctx, () => this.authService.register(payload));
   }
 
-  @MessagePattern('login')
+  @MessagePattern(AuthCommands.Login)
   async login(
     @Payload() payload: LoginDto,
     @Ctx() ctx: RmqContext,
@@ -54,7 +55,7 @@ export class AuthController extends BaseRpcController {
     return this.handleMessage(ctx, () => this.authService.login(payload));
   }
 
-  @MessagePattern('refresh')
+  @MessagePattern(AuthCommands.Refresh)
   async refresh(
     @Payload() payload: RefreshDto,
     @Ctx() ctx: RmqContext,
@@ -62,7 +63,7 @@ export class AuthController extends BaseRpcController {
     return this.handleMessage(ctx, () => this.authService.refresh(payload));
   }
 
-  @MessagePattern('logout')
+  @MessagePattern(AuthCommands.Logout)
   async logout(
     @Payload() payload: LogoutDto,
     @Ctx() ctx: RmqContext,
@@ -71,7 +72,7 @@ export class AuthController extends BaseRpcController {
     return { success: true };
   }
 
-  @MessagePattern('logout_all')
+  @MessagePattern(AuthCommands.LogoutAll)
   async logoutAll(
     @Payload() payload: LogoutDto,
     @Ctx() ctx: RmqContext,
@@ -80,7 +81,7 @@ export class AuthController extends BaseRpcController {
     return { success: true };
   }
 
-  @MessagePattern('validate_user_oauth')
+  @MessagePattern(AuthCommands.ValidateUserOAuth)
   async validateUserOAuth(
     @Payload() payload: ValidateUserOauthDto,
     @Ctx() ctx: RmqContext,

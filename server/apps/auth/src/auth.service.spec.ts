@@ -24,6 +24,7 @@ import {
 } from '@app/common/contracts/user';
 import { TokenEntity, UserEntity } from '@app/common/database/entities';
 import { UserRole } from '@app/common/database/enums';
+import { UserCommands } from '@app/common/messaging';
 
 jest.mock('./token.service');
 jest.mock('bcrypt');
@@ -78,9 +79,12 @@ describe('AuthService', () => {
     });
 
     it('should call userServiceClient', () => {
-      expect(userServiceClient.send).toHaveBeenCalledWith('get_user_by_name', {
-        username: payload.username,
-      });
+      expect(userServiceClient.send).toHaveBeenCalledWith(
+        UserCommands.GetByName,
+        {
+          username: payload.username,
+        },
+      );
     });
 
     it('should compare payload.password with hashed password from DB', () => {
@@ -133,7 +137,7 @@ describe('AuthService', () => {
       await authService.register(payload);
 
       expect(userServiceClient.send).toHaveBeenCalledWith(
-        'create_user',
+        UserCommands.Create,
         credentials,
       );
     });
@@ -388,9 +392,12 @@ describe('AuthService', () => {
       userServiceClient.send.mockReturnValueOnce(of(userWithoutPassword));
       result = await authService.validateUserOAuth(payload);
 
-      expect(userServiceClient.send).toHaveBeenCalledWith('get_user_by_email', {
-        email: payload.email,
-      });
+      expect(userServiceClient.send).toHaveBeenCalledWith(
+        UserCommands.GetByEmail,
+        {
+          email: payload.email,
+        },
+      );
     });
 
     it('should link user account with OAuth if it exists', async () => {
@@ -400,7 +407,7 @@ describe('AuthService', () => {
       result = await authService.validateUserOAuth(payload);
 
       expect(userServiceClient.send).toHaveBeenCalledWith(
-        'link_user_with_oauth',
+        UserCommands.LinkWithOAuth,
         {
           userId: user.id,
           provider: payload.provider,
@@ -408,7 +415,7 @@ describe('AuthService', () => {
         },
       );
       expect(userServiceClient.send).not.toHaveBeenCalledWith(
-        'create_user_oauth',
+        UserCommands.CreateOAuth,
         expect.anything(),
       );
       expect(result).toEqual(userWithoutPassword);
@@ -421,15 +428,18 @@ describe('AuthService', () => {
       result = await authService.validateUserOAuth(payload);
 
       expect(userServiceClient.send).not.toHaveBeenCalledWith(
-        'link_user_with_oauth',
+        UserCommands.LinkWithOAuth,
         expect.anything(),
       );
-      expect(userServiceClient.send).toHaveBeenCalledWith('create_user_oauth', {
-        username: payload.username,
-        email: payload.email,
-        provider: payload.provider,
-        providerId: payload.providerId,
-      });
+      expect(userServiceClient.send).toHaveBeenCalledWith(
+        UserCommands.CreateOAuth,
+        {
+          username: payload.username,
+          email: payload.email,
+          provider: payload.provider,
+          providerId: payload.providerId,
+        },
+      );
       expect(result).toEqual(userWithoutPassword);
     });
 

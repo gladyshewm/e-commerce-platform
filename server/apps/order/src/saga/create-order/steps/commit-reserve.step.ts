@@ -6,6 +6,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AddStockPayload } from '@app/common/contracts/inventory';
 import { catchError, lastValueFrom } from 'rxjs';
 import { INVENTORY_SERVICE } from '@app/common/constants';
+import { InventoryCommands } from '@app/common/messaging';
 
 @Injectable()
 export class CommitReserveStep extends SagaStep<OrderSagaContext> {
@@ -27,14 +28,16 @@ export class CommitReserveStep extends SagaStep<OrderSagaContext> {
     }));
 
     await lastValueFrom(
-      this.inventoryServiceClient.send('commit_reserve_many', payload).pipe(
-        catchError((error) => {
-          throw new RpcException({
-            message: error.message,
-            statusCode: error.statusCode,
-          });
-        }),
-      ),
+      this.inventoryServiceClient
+        .send(InventoryCommands.CommitReserveMany, payload)
+        .pipe(
+          catchError((error) => {
+            throw new RpcException({
+              message: error.message,
+              statusCode: error.statusCode,
+            });
+          }),
+        ),
     );
   }
 

@@ -9,6 +9,7 @@ import {
 } from '@app/common/contracts/inventory';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { PRODUCT_SERVICE } from '@app/common/constants';
+import { InventoryEvents } from '@app/common/messaging';
 
 @Injectable()
 export class InventoryService {
@@ -46,7 +47,7 @@ export class InventoryService {
       );
 
       this.productServiceClient
-        .emit('inventory_created', {
+        .emit(InventoryEvents.Created, {
           productId: payload.productId,
           inventoryId: inventory.id,
         })
@@ -57,7 +58,7 @@ export class InventoryService {
         error.stack,
       );
       this.productServiceClient
-        .emit('inventory_create_failed', {
+        .emit(InventoryEvents.CreationFailed, {
           productId: payload.productId,
         })
         .subscribe();

@@ -12,6 +12,7 @@ import { PRODUCT_SERVICE } from '@app/common/constants';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { catchError, lastValueFrom } from 'rxjs';
 import { ProductWithCategory } from '@app/common/contracts/product';
+import { ProductCommands } from '@app/common/messaging';
 
 @Injectable()
 export class OrderService {
@@ -34,14 +35,16 @@ export class OrderService {
     try {
       const productIds = payload.items.map((i) => i.productId);
       const products = await lastValueFrom<ProductWithCategory[]>(
-        this.productServiceClient.send('get_products', { productIds }).pipe(
-          catchError((error) => {
-            throw new RpcException({
-              message: error.message,
-              statusCode: error.statusCode,
-            });
-          }),
-        ),
+        this.productServiceClient
+          .send(ProductCommands.GetAll, { productIds })
+          .pipe(
+            catchError((error) => {
+              throw new RpcException({
+                message: error.message,
+                statusCode: error.statusCode,
+              });
+            }),
+          ),
       );
       const productMap = new Map(products.map((p) => [p.id, p]));
 

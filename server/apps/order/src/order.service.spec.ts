@@ -17,6 +17,7 @@ import {
 } from '@app/common/contracts/order';
 import { ProductWithCategory } from '@app/common/contracts/product';
 import { OrderStatus } from '@app/common/database/enums';
+import { ProductCommands } from '@app/common/messaging';
 
 describe('OrderService', () => {
   let orderService: OrderService;
@@ -135,9 +136,12 @@ describe('OrderService', () => {
     });
 
     it('should call productServiceClient', () => {
-      expect(productServiceClient.send).toHaveBeenCalledWith('get_products', {
-        productIds: payload.items.map((i) => i.productId),
-      });
+      expect(productServiceClient.send).toHaveBeenCalledWith(
+        ProductCommands.GetAll,
+        {
+          productIds: payload.items.map((i) => i.productId),
+        },
+      );
     });
 
     it('should throw RpcException if product not found', async () => {

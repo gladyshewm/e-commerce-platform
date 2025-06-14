@@ -33,6 +33,7 @@ import { ReviewDto } from './dto/review.dto';
 import { CreateReviewDto } from './dto/review-create.dto';
 import { PRODUCT_SERVICE } from '@app/common/constants';
 import { UserRole } from '@app/common/database/enums';
+import { ProductCommands } from '@app/common/messaging';
 import { handleRpcError } from '../common/utils';
 import { JwtAuthGuard, RolesGuard } from '../common/guards';
 import { CurrentUser, Roles } from '../common/decorators';
@@ -57,7 +58,7 @@ export class ProductController {
   async getCategories(): Promise<CategoryDto[]> {
     return lastValueFrom<Category[]>(
       this.productServiceClient
-        .send('get_categories', {})
+        .send(ProductCommands.GetCategories, {})
         .pipe(handleRpcError()),
     );
   }
@@ -83,7 +84,7 @@ export class ProductController {
   async createCategory(@Body() dto: CreateCategoryDto): Promise<CategoryDto> {
     return lastValueFrom<Category>(
       this.productServiceClient
-        .send('create_category', dto)
+        .send(ProductCommands.CreateCategory, dto)
         .pipe(handleRpcError()),
     );
   }
@@ -112,7 +113,7 @@ export class ProductController {
   ): Promise<CategoryDto> {
     return lastValueFrom<Category>(
       this.productServiceClient
-        .send('update_category', { id, ...dto })
+        .send(ProductCommands.UpdateCategory, { id, ...dto })
         .pipe(handleRpcError()),
     );
   }
@@ -138,7 +139,7 @@ export class ProductController {
   async deleteCategory(@Param('id') id: number): Promise<CategoryDto> {
     return lastValueFrom<Category>(
       this.productServiceClient
-        .send('delete_category', { id })
+        .send(ProductCommands.DeleteCategory, { id })
         .pipe(handleRpcError()),
     );
   }
@@ -157,7 +158,7 @@ export class ProductController {
   ): Promise<ProductWithCategoryDto[]> {
     return lastValueFrom<ProductWithCategory[]>(
       this.productServiceClient
-        .send('get_products', query)
+        .send(ProductCommands.GetAll, query)
         .pipe(handleRpcError()),
     );
   }
@@ -175,7 +176,7 @@ export class ProductController {
   ): Promise<ProductWithCategoryDto> {
     return lastValueFrom<ProductWithCategory>(
       this.productServiceClient
-        .send('get_product_by_id', { id })
+        .send(ProductCommands.GetById, { id })
         .pipe(handleRpcError()),
     );
   }
@@ -203,7 +204,7 @@ export class ProductController {
   ): Promise<ProductWithCategoryDto> {
     return lastValueFrom<ProductWithCategory>(
       this.productServiceClient
-        .send('create_product', dto)
+        .send(ProductCommands.Create, dto)
         .pipe(handleRpcError()),
     );
   }
@@ -232,7 +233,7 @@ export class ProductController {
   ): Promise<ProductWithCategoryDto> {
     return lastValueFrom<ProductWithCategory>(
       this.productServiceClient
-        .send('update_product', { id, ...dto })
+        .send(ProductCommands.Update, { id, ...dto })
         .pipe(handleRpcError()),
     );
   }
@@ -260,7 +261,7 @@ export class ProductController {
   ): Promise<ProductWithCategoryDto> {
     return lastValueFrom<ProductWithCategory>(
       this.productServiceClient
-        .send('delete_product', { id })
+        .send(ProductCommands.Delete, { id })
         .pipe(handleRpcError()),
     );
   }
@@ -277,7 +278,7 @@ export class ProductController {
   async getReviews(@Param('id') id: number): Promise<ReviewDto[]> {
     return lastValueFrom<Review[]>(
       this.productServiceClient
-        .send('get_reviews', { productId: id })
+        .send(ProductCommands.GetReviewsByProductId, { productId: id })
         .pipe(handleRpcError()),
     );
   }
@@ -303,7 +304,11 @@ export class ProductController {
   ): Promise<ReviewDto> {
     return lastValueFrom<Review>(
       this.productServiceClient
-        .send('create_review', { productId: id, userId: user.id, ...dto })
+        .send(ProductCommands.CreateReview, {
+          productId: id,
+          userId: user.id,
+          ...dto,
+        })
         .pipe(handleRpcError()),
     );
   }
@@ -330,7 +335,11 @@ export class ProductController {
   ): Promise<ReviewDto> {
     return lastValueFrom<Review>(
       this.productServiceClient
-        .send('delete_review', { productId, reviewId, userId: user.id })
+        .send(ProductCommands.DeleteReview, {
+          productId,
+          reviewId,
+          userId: user.id,
+        })
         .pipe(handleRpcError()),
     );
   }

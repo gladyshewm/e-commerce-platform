@@ -9,6 +9,7 @@ import {
 import { BaseRpcController, RmqService } from '@app/rmq';
 import { ChargePaymentDto } from './dto/payment-charge.dto';
 import { RefundPaymentDto } from './dto/payment-refund.dto';
+import { PaymentCommands } from '@app/common/messaging';
 
 @Controller()
 export class PaymentController extends BaseRpcController {
@@ -19,7 +20,7 @@ export class PaymentController extends BaseRpcController {
     super(rmqService);
   }
 
-  @MessagePattern('charge_payment')
+  @MessagePattern(PaymentCommands.Charge)
   async chargePayment(
     @Payload() payload: ChargePaymentDto,
     @Ctx() ctx: RmqContext,
@@ -29,7 +30,7 @@ export class PaymentController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('refund_payment')
+  @MessagePattern(PaymentCommands.Refund)
   async refundPayment(
     @Payload() payload: RefundPaymentDto,
     @Ctx() ctx: RmqContext,

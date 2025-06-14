@@ -8,6 +8,7 @@ import {
   RmqContext,
 } from '@nestjs/microservices';
 import { BaseRpcController, RmqService } from '@app/rmq';
+import { InventoryEvents, ProductCommands } from '@app/common/messaging';
 import { GetProductsQueryDto } from './dto/product/product-get.dto';
 import { GetProductByIdDto } from './dto/product/product-get-by-id.dto';
 import { CreateProductDto } from './dto/product/product-create.dto';
@@ -31,7 +32,7 @@ export class ProductController extends BaseRpcController {
     super(rmqService);
   }
 
-  @MessagePattern('get_products')
+  @MessagePattern(ProductCommands.GetAll)
   async getProducts(
     @Payload() payload: GetProductsQueryDto,
     @Ctx() ctx: RmqContext,
@@ -41,7 +42,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('get_product_by_id')
+  @MessagePattern(ProductCommands.GetById)
   async getProductById(
     @Payload() payload: GetProductByIdDto,
     @Ctx() ctx: RmqContext,
@@ -51,7 +52,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('create_product')
+  @MessagePattern(ProductCommands.Create)
   async createProduct(
     @Payload() payload: CreateProductDto,
     @Ctx() ctx: RmqContext,
@@ -61,7 +62,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @EventPattern('inventory_created')
+  @EventPattern(InventoryEvents.Created)
   async inventoryCreatedHandler(
     @Payload() payload: InventoryCreatedDto,
     @Ctx() ctx: RmqContext,
@@ -71,7 +72,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @EventPattern('inventory_create_failed')
+  @EventPattern(InventoryEvents.CreationFailed)
   async inventoryCreateFailedHandler(
     @Payload() payload: InventoryCreateFailedDto,
     @Ctx() ctx: RmqContext,
@@ -84,7 +85,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('update_product')
+  @MessagePattern(ProductCommands.Update)
   async updateProduct(
     @Payload() payload: UpdateProductDto,
     @Ctx() ctx: RmqContext,
@@ -94,7 +95,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('delete_product')
+  @MessagePattern(ProductCommands.Delete)
   async deleteProduct(
     @Payload() payload: DeleteProductDto,
     @Ctx() ctx: RmqContext,
@@ -106,7 +107,7 @@ export class ProductController extends BaseRpcController {
 
   // REVIEWS
 
-  @MessagePattern('get_reviews')
+  @MessagePattern(ProductCommands.GetReviewsByProductId)
   async getReviews(
     @Payload() payload: GetReviewsByProductId,
     @Ctx() ctx: RmqContext,
@@ -116,7 +117,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('create_review')
+  @MessagePattern(ProductCommands.CreateReview)
   async createReview(
     @Payload() payload: CreateReviewDto,
     @Ctx() ctx: RmqContext,
@@ -126,7 +127,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('delete_review')
+  @MessagePattern(ProductCommands.DeleteReview)
   async deleteReview(
     @Payload() payload: DeleteReviewDto,
     @Ctx() ctx: RmqContext,
@@ -138,12 +139,12 @@ export class ProductController extends BaseRpcController {
 
   // CATEGORIES
 
-  @MessagePattern('get_categories')
+  @MessagePattern(ProductCommands.GetCategories)
   async getCategories(@Ctx() ctx: RmqContext) {
     return this.handleMessage(ctx, () => this.productService.getCategories());
   }
 
-  @MessagePattern('create_category')
+  @MessagePattern(ProductCommands.CreateCategory)
   async createCategory(
     @Payload() payload: CreateCategoryDto,
     @Ctx() ctx: RmqContext,
@@ -153,7 +154,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('update_category')
+  @MessagePattern(ProductCommands.UpdateCategory)
   async updateCategory(
     @Payload() payload: UpdateCategoryDto,
     @Ctx() ctx: RmqContext,
@@ -163,7 +164,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
-  @MessagePattern('delete_category')
+  @MessagePattern(ProductCommands.DeleteCategory)
   async deleteCategory(
     @Payload() payload: DeleteCategoryDto,
     @Ctx() ctx: RmqContext,

@@ -21,6 +21,7 @@ import {
 import { UserEntity, UserOAuthEntity } from '@app/common/database/entities';
 import { NOTIFICATION_SERVICE } from '@app/common/constants';
 import { EmailVerificationService } from './email-verification.service';
+import { UserCommands } from '@app/common/messaging';
 
 @Injectable()
 export class UserService {
@@ -93,7 +94,7 @@ export class UserService {
     const token = await this.emailVerificationService.createToken(user.id);
 
     this.notificationServiceClient
-      .emit('send_email_activation_link', {
+      .emit(UserCommands.SendEmailActivationLink, {
         userId: user.id,
         username: user.username,
         token,
