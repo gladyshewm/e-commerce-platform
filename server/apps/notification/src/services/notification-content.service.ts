@@ -27,6 +27,12 @@ export class NotificationContentService {
     return { subject, content };
   }
 
+  buildOrderCancelled(orderId: number): NotificationContentPayload {
+    const subject = 'Order Cancelled';
+    const content = `Order №${orderId} has been successfully cancelled`;
+    return { subject, content };
+  }
+
   buildDeliveryScheduled(orderId: number): NotificationContentPayload {
     const subject = 'Delivery Scheduled';
     const content = `Delivery for order №${orderId} has been scheduled`;

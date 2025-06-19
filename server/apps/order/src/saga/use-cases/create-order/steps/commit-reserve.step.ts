@@ -1,17 +1,17 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { RESERVE_ITEMS_STEP } from '../constants';
-import { OrderSagaContext } from '../../types/order-saga-ctx.interface';
-import { SagaStep } from './saga-step';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { catchError, lastValueFrom } from 'rxjs';
 import { AddStockPayload } from '@app/common/contracts/inventory';
 import { INVENTORY_SERVICE } from '@app/common/constants';
 import { InventoryCommands } from '@app/common/messaging';
+import { COMMIT_RESERVE_STEP } from '../constants';
+import { SagaStep } from '../../../saga-step';
+import { OrderSagaContext } from '../../../types/order-saga-ctx.interface';
 
 @Injectable()
-export class ReserveItemsStep extends SagaStep<OrderSagaContext> {
-  readonly name = RESERVE_ITEMS_STEP;
-  private readonly logger = new Logger(ReserveItemsStep.name);
+export class CommitReserveStep extends SagaStep<OrderSagaContext> {
+  readonly name = COMMIT_RESERVE_STEP;
+  private readonly logger = new Logger(CommitReserveStep.name);
 
   constructor(
     @Inject(INVENTORY_SERVICE)
@@ -21,7 +21,7 @@ export class ReserveItemsStep extends SagaStep<OrderSagaContext> {
   }
 
   async invoke(context: OrderSagaContext): Promise<void> {
-    this.logger.log(`Reserving items for order with ID ${context.order.id}`);
+    this.logger.log(`Committing reserve for order with ID ${context.order.id}`);
     const payload: AddStockPayload[] = context.order.items.map((item) => ({
       productId: item.productId,
       quantity: item.quantity,
@@ -29,7 +29,7 @@ export class ReserveItemsStep extends SagaStep<OrderSagaContext> {
 
     await lastValueFrom(
       this.inventoryServiceClient
-        .send(InventoryCommands.ReserveMany, payload)
+        .send(InventoryCommands.CommitReserveMany, payload)
         .pipe(
           catchError((error) => {
             throw new RpcException({
@@ -42,19 +42,9 @@ export class ReserveItemsStep extends SagaStep<OrderSagaContext> {
   }
 
   async compensate(context: OrderSagaContext): Promise<void> {
+    // не требуется
     this.logger.log(
-      `Releasing reserved items for order with ID ${context.order.id}`,
-    );
-    const payload: AddStockPayload[] = context.order.items.map((item) => ({
-      productId: item.productId,
-      quantity: item.quantity,
-    }));
-
-    await lastValueFrom(
-      this.inventoryServiceClient.send(
-        InventoryCommands.ReleaseReserveMany,
-        payload,
-      ),
+      `Rolling back reserve for order with ID ${context.order.id}`,
     );
   }
 }

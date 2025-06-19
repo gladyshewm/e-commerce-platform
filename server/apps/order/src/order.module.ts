@@ -7,13 +7,6 @@ import { RmqModule } from '@app/rmq';
 import { OrderEntity } from '@app/common/database/entities';
 import { TypeOrmConfigModule } from '@app/common/database/config';
 import * as Joi from 'joi';
-import {
-  CHARGE_PAYMENT_STEP,
-  COMMIT_RESERVE_STEP,
-  PLACE_ORDER_STEP,
-  RESERVE_ITEMS_STEP,
-} from './saga/create-order/constants';
-import { PlaceOrderStep } from './saga/create-order/steps/place-order.step';
 import { OrderOrchestrator } from './saga/order.orchestrator';
 import {
   DELIVERY_SERVICE,
@@ -22,10 +15,26 @@ import {
   PAYMENT_SERVICE,
   PRODUCT_SERVICE,
 } from '@app/common/constants';
-import { ReserveItemsStep } from './saga/create-order/steps/reserve-items.step';
-import { ChargePaymentStep } from './saga/create-order/steps/charge-payment.step';
-import { CommitReserveStep } from './saga/create-order/steps/commit-reserve.step';
-import { CreateOrderSagaFactory } from './saga/create-order/create-order-saga.factory';
+import { CreateOrderSagaFactory } from './saga/use-cases/create-order/create-order-saga.factory';
+import {
+  CHARGE_PAYMENT_STEP,
+  COMMIT_RESERVE_STEP,
+  PLACE_ORDER_STEP,
+  RESERVE_ITEMS_STEP,
+} from './saga/use-cases/create-order/constants';
+import { PlaceOrderStep } from './saga/use-cases/create-order/steps/place-order.step';
+import { ReserveItemsStep } from './saga/use-cases/create-order/steps/reserve-items.step';
+import { ChargePaymentStep } from './saga/use-cases/create-order/steps/charge-payment.step';
+import { CommitReserveStep } from './saga/use-cases/create-order/steps/commit-reserve.step';
+import { CancelOrderSagaFactory } from './saga/use-cases/cancel-order/cancel-order-saga.factory';
+import {
+  REFUND_STEP,
+  RELEASE_ITEMS_STEP,
+  UPDATE_STATUS_STEP,
+} from './saga/use-cases/cancel-order/constants';
+import { RefundStep } from './saga/use-cases/cancel-order/steps/refund.step';
+import { ReleaseItemsStep } from './saga/use-cases/cancel-order/steps/release-items.step';
+import { UpdateStatusStep } from './saga/use-cases/cancel-order/steps/update-status.step';
 
 @Module({
   imports: [
@@ -66,6 +75,10 @@ import { CreateOrderSagaFactory } from './saga/create-order/create-order-saga.fa
     { provide: RESERVE_ITEMS_STEP, useClass: ReserveItemsStep },
     { provide: CHARGE_PAYMENT_STEP, useClass: ChargePaymentStep },
     { provide: COMMIT_RESERVE_STEP, useClass: CommitReserveStep },
+    CancelOrderSagaFactory,
+    { provide: REFUND_STEP, useClass: RefundStep },
+    { provide: RELEASE_ITEMS_STEP, useClass: ReleaseItemsStep },
+    { provide: UPDATE_STATUS_STEP, useClass: UpdateStatusStep },
   ],
 })
 export class OrderModule {}

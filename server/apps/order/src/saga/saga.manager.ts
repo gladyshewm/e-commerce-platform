@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { SagaStep } from './create-order/steps/saga-step';
+import { SagaStep } from './saga-step';
 
 export class SagaManager<T> {
   private readonly logger = new Logger(SagaManager.name);

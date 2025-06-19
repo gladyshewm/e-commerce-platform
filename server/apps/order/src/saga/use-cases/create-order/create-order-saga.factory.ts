@@ -1,7 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { OrderSagaContext } from '../types/order-saga-ctx.interface';
-import { SagaFactory } from '../types/saga-factory.interface';
-import { SagaStep } from './steps/saga-step';
+import { SagaStep } from '../../saga-step';
 import {
   CHARGE_PAYMENT_STEP,
   COMMIT_RESERVE_STEP,
@@ -12,6 +10,8 @@ import { PlaceOrderStep } from './steps/place-order.step';
 import { ReserveItemsStep } from './steps/reserve-items.step';
 import { ChargePaymentStep } from './steps/charge-payment.step';
 import { CommitReserveStep } from './steps/commit-reserve.step';
+import { SagaFactory } from '../../types/saga-factory.interface';
+import { OrderSagaContext } from '../../types/order-saga-ctx.interface';
 
 export class CreateOrderSagaFactory implements SagaFactory<OrderSagaContext> {
   constructor(

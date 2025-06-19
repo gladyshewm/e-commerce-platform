@@ -59,6 +59,19 @@ export class NotificationService {
     );
   }
 
+  async notifyUserOrderCancelled(payload: OrderCreatedPayload): Promise<void> {
+    const { userId, orderId } = payload;
+    const { subject, content } =
+      this.contentService.buildOrderCancelled(orderId);
+
+    await this.processor.process(
+      NotificationType.EMAIL,
+      userId,
+      subject,
+      content,
+    );
+  }
+
   async notifyUserDeliveryScheduled(
     payload: OrderCreatedPayload,
   ): Promise<void> {

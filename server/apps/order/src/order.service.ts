@@ -2,7 +2,6 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import {
   CreateOrderPayload,
   Order,
-  OrderItem,
   OrderWithoutItems,
 } from '@app/common/contracts/order';
 import { DataSource, Repository } from 'typeorm';
@@ -25,6 +24,24 @@ export class OrderService {
     private readonly productServiceClient: ClientProxy,
   ) {
     this.orderRepository = this.dataSource.getRepository(OrderEntity);
+  }
+
+  private mapToOrderDto(order: OrderEntity): Order {
+    return {
+      id: order.id,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createdAt: order.createdAt,
+      userId: order.user.id,
+      items:
+        order.items?.map((i) => ({
+          id: i.id,
+          quantity: i.quantity,
+          priceAtPurchase: i.priceAtPurchase,
+          orderId: order.id,
+          productId: i.product.id,
+        })) ?? [],
+    };
   }
 
   async createOrder(payload: CreateOrderPayload): Promise<Order> {
@@ -53,7 +70,7 @@ export class OrderService {
 
         if (!product) {
           throw new RpcException({
-            message: `Product with id ${item.productId} not found`,
+            message: `Product with ID ${item.productId} not found`,
             statusCode: HttpStatus.NOT_FOUND,
           });
         }
@@ -85,20 +102,7 @@ export class OrderService {
       );
 
       await queryRunner.commitTransaction();
-      return {
-        id: order.id,
-        totalAmount: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt,
-        userId: order.user.id,
-        items: savedItems.map((item) => ({
-          id: item.id,
-          quantity: item.quantity,
-          priceAtPurchase: item.priceAtPurchase,
-          orderId: item.order.id,
-          productId: item.product.id,
-        })),
-      };
+      return this.mapToOrderDto({ ...order, items: savedItems });
     } catch (error) {
       this.logger.error(
         `Failed to create order: ${error.message}`,
@@ -118,7 +122,7 @@ export class OrderService {
     });
 
     if (!order) {
-      this.logger.error(`Order with id ${orderId} not found`);
+      this.logger.error(`Order with ID ${orderId} not found`);
       throw new RpcException({
         message: `Order with id ${orderId} not found`,
         statusCode: HttpStatus.NOT_FOUND,
@@ -126,28 +130,32 @@ export class OrderService {
     }
 
     if (order.status === OrderStatus.CANCELLED) {
-      this.logger.warn(`Order with id ${orderId} already cancelled`);
-      return {
-        id: order.id,
-        totalAmount: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt,
-        userId: order.user.id,
-      };
+      this.logger.warn(`Order with ID ${orderId} already cancelled`);
+      return this.mapToOrderDto(order);
     }
 
     order.status = OrderStatus.CANCELLED;
     const saved = await this.orderRepository.save(order);
 
-    this.logger.log(`Order with id ${orderId} cancelled`);
+    this.logger.log(`Order with ID ${orderId} cancelled`);
+    return this.mapToOrderDto(saved);
+  }
 
-    return {
-      id: saved.id,
-      totalAmount: saved.totalAmount,
-      status: saved.status,
-      createdAt: saved.createdAt,
-      userId: saved.user.id,
-    };
+  async findOrder(orderId: number): Promise<Order> {
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      relations: ['user', 'items', 'items.product'],
+    });
+
+    if (!order) {
+      this.logger.error(`Order with ID ${orderId} not found`);
+      throw new RpcException({
+        message: `Order with ID ${orderId} not found`,
+        statusCode: HttpStatus.NOT_FOUND,
+      });
+    }
+
+    return this.mapToOrderDto(order);
   }
 
   async updateOrderStatus(
@@ -160,48 +168,26 @@ export class OrderService {
     });
 
     if (!order) {
-      this.logger.error(`Order with id ${orderId} not found`);
+      this.logger.error(`Order with ID ${orderId} not found`);
       throw new RpcException({
-        message: `Order with id ${orderId} not found`,
+        message: `Order with ID ${orderId} not found`,
         statusCode: HttpStatus.NOT_FOUND,
       });
     }
 
     const existingStatus = order.status;
-    const items: OrderItem[] = order.items.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-      priceAtPurchase: item.priceAtPurchase,
-      orderId,
-      productId: item.product.id,
-    }));
 
     if (existingStatus === status) {
-      this.logger.log(`Order with id ${orderId} already has status ${status}`);
-      return {
-        id: order.id,
-        totalAmount: order.totalAmount,
-        status: order.status,
-        createdAt: order.createdAt,
-        userId: order.user.id,
-        items,
-      };
+      this.logger.log(`Order with ID ${orderId} already has status ${status}`);
+      return this.mapToOrderDto(order);
     }
 
     order.status = status;
     const saved = await this.orderRepository.save(order);
 
     this.logger.log(
-      `Order with id ${orderId} status updated from ${existingStatus.toUpperCase()} to ${status.toUpperCase()}`,
+      `Order with ID ${orderId} status updated from ${existingStatus.toUpperCase()} to ${status.toUpperCase()}`,
     );
-
-    return {
-      id: saved.id,
-      totalAmount: saved.totalAmount,
-      status: saved.status,
-      createdAt: saved.createdAt,
-      userId: saved.user.id,
-      items,
-    };
+    return this.mapToOrderDto(saved);
   }
 }

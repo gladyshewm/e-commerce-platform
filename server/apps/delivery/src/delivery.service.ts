@@ -57,7 +57,15 @@ export class DeliveryService {
     );
   }
 
-  async startDelivery(userId: number, orderId: number) {
+  async startDelivery(userId: number, orderId: number): Promise<void> {
+    // TODO:
+    // if (order.status === OrderStatus.CANCELLED) {
+    //   this.logger.warn(
+    //     `Ignoring delivery for order with ID ${orderId} is cancelled`,
+    //   );
+    //   return;
+    // }
+
     await this.updateDeliveryStatus(orderId, DeliveryStatus.IN_TRANSIT);
 
     this.logger.log(`Delivery for order with ID ${orderId} started`);

@@ -1,4 +1,11 @@
-import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Inject,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -47,5 +54,21 @@ export class OrderController {
     );
   }
 
-  // TODO: GET /orders/{id} — получить конкретный заказ, GET /orders — список заказов, PATCH /orders/{id} — обновить статус заказа ??
+  @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancel order' })
+  @ApiResponse({
+    status: 201,
+    type: OrderDto,
+    description: 'Returns cancelled order',
+  })
+  @ApiBearerAuth()
+  async cancelOrder(@Param('id') id: number) {
+    return lastValueFrom<Order>(
+      this.orderServiceClient
+        .send(OrderCommands.Cancel, { orderId: id })
+        .pipe(handleRpcError()),
+    );
+  }
+
+  // TODO: GET /orders/{id}, GET /orders, PATCH /orders/{id}
 }

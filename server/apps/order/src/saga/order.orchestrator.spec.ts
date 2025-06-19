@@ -3,16 +3,18 @@ import { ClientProxy } from '@nestjs/microservices';
 import { of } from 'rxjs';
 import { OrderOrchestrator } from './order.orchestrator';
 import { OrderService } from '../order.service';
-import { CreateOrderSagaFactory } from './create-order/create-order-saga.factory';
 import { SagaManager } from './saga.manager';
-import { SagaStep } from './create-order/steps/saga-step';
 import { OrderSagaContext } from './types/order-saga-ctx.interface';
 import { DELIVERY_SERVICE, NOTIFICATION_SERVICE } from '@app/common/constants';
 import { CreateOrderPayload, Order } from '@app/common/contracts/order';
 import { OrderEvents } from '@app/common/messaging';
+import { CreateOrderSagaFactory } from './use-cases/create-order/create-order-saga.factory';
+import { CancelOrderSagaFactory } from './use-cases/cancel-order/cancel-order-saga.factory';
+import { SagaStep } from './saga-step';
 
 jest.mock('../order.service');
-jest.mock('./create-order/create-order-saga.factory');
+jest.mock('./use-cases/create-order/create-order-saga.factory');
+jest.mock('./use-cases/cancel-order/cancel-order-saga.factory');
 jest.mock('./saga.manager', () => ({
   SagaManager: jest.fn().mockImplementation(() => ({
     execute: jest.fn(),
@@ -23,6 +25,7 @@ describe('OrderOrchestrator', () => {
   let orderOrchestrator: OrderOrchestrator;
   let orderService: jest.Mocked<OrderService>;
   let createOrderSagaFactory: jest.Mocked<CreateOrderSagaFactory>;
+  let cancelOrderSagaFactory: jest.Mocked<CancelOrderSagaFactory>;
   let deliveryServiceClient: jest.Mocked<ClientProxy>;
   let notificationServiceClient: jest.Mocked<ClientProxy>;
 
@@ -32,6 +35,7 @@ describe('OrderOrchestrator', () => {
         OrderOrchestrator,
         OrderService,
         CreateOrderSagaFactory,
+        CancelOrderSagaFactory,
         {
           provide: DELIVERY_SERVICE,
           useValue: {
@@ -53,6 +57,9 @@ describe('OrderOrchestrator', () => {
     orderService = app.get<jest.Mocked<OrderService>>(OrderService);
     createOrderSagaFactory = app.get<jest.Mocked<CreateOrderSagaFactory>>(
       CreateOrderSagaFactory,
+    );
+    cancelOrderSagaFactory = app.get<jest.Mocked<CancelOrderSagaFactory>>(
+      CancelOrderSagaFactory,
     );
     deliveryServiceClient = app.get<jest.Mocked<ClientProxy>>(DELIVERY_SERVICE);
     notificationServiceClient =

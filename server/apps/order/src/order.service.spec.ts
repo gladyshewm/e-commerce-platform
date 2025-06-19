@@ -250,6 +250,7 @@ describe('OrderService', () => {
         status: OrderStatus.CANCELLED,
         createdAt: order.createdAt,
         userId: order.user.id,
+        items: [],
       });
       expect(orderRepository.save).not.toHaveBeenCalled();
     });
@@ -270,6 +271,7 @@ describe('OrderService', () => {
         status: OrderStatus.CANCELLED,
         createdAt: order.createdAt,
         userId: order.user.id,
+        items: [],
       });
     });
   });

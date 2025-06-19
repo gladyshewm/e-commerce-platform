@@ -1,17 +1,17 @@
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { catchError, lastValueFrom } from 'rxjs';
+import { OrderStatus, PaymentStatus } from '@app/common/database/enums';
+import { PaymentCommands } from '@app/common/messaging';
+import { PAYMENT_SERVICE } from '@app/common/constants';
 import { CHARGE_PAYMENT_STEP } from '../constants';
-import { OrderSagaContext } from '../../types/order-saga-ctx.interface';
-import { SagaStep } from './saga-step';
+import { SagaStep } from '../../../saga-step';
 import {
   ChargePaymentPayload,
   PaymentTransaction,
 } from '@app/common/contracts/payment';
-import { catchError, lastValueFrom } from 'rxjs';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
-import { OrderStatus, PaymentStatus } from '@app/common/database/enums';
-import { OrderService } from '../../../order.service';
-import { PAYMENT_SERVICE } from '@app/common/constants';
-import { PaymentCommands } from '@app/common/messaging';
+import { OrderSagaContext } from '../../../types/order-saga-ctx.interface';
+import { OrderService } from '../../../../order.service';
 
 @Injectable()
 export class ChargePaymentStep extends SagaStep<OrderSagaContext> {

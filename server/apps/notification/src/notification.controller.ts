@@ -39,6 +39,16 @@ export class NotificationController extends BaseRpcController {
     );
   }
 
+  @EventPattern(OrderEvents.Cancelled)
+  async handleOrderCancelled(
+    @Payload() payload: NotifyOrderDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    await this.handleMessage(ctx, () =>
+      this.notificationService.notifyUserOrderCancelled(payload),
+    );
+  }
+
   @EventPattern(DeliveryEvents.Scheduled)
   async handleDeliveryScheduled(
     @Payload() payload: NotifyOrderDto,

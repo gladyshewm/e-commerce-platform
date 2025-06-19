@@ -13,6 +13,7 @@ import { OrderOrchestrator } from './saga/order.orchestrator';
 import { CreateOrderDto } from './dto/order-create.dto';
 import { OrderService } from './order.service';
 import { OrderShippedDto } from './dto/order-shipped.dto';
+import { CancelOrderDto } from './dto/order-cancel.dto';
 
 @Controller()
 export class OrderController extends BaseRpcController {
@@ -54,5 +55,13 @@ export class OrderController extends BaseRpcController {
     );
   }
 
-  // TODO: cancel_order
+  @MessagePattern(OrderCommands.Cancel)
+  async cancelOrder(
+    @Payload() payload: CancelOrderDto,
+    @Ctx() ctx: RmqContext,
+  ) {
+    return this.handleMessage(ctx, () =>
+      this.orderOrchestrator.cancelOrder(payload),
+    );
+  }
 }
